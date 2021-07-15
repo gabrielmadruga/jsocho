@@ -1,0 +1,23 @@
+{
+  "name": "loopity",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "start": "browser-sync -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabrielmadruga/loopity.git"
+  },
+  "author": "Gabriel Madruga",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gabrielmadruga/loopity/issues"
+  },
+  "homepage": "https://github.com/gabrielmadruga/loopity#readme",
+  "devDependencies": {
+    "browser-sync": "^2.27.3",
+    "eslint": "^7.29.0"
+  }
+}
