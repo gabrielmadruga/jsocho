@@ -4,7 +4,9 @@
   "description": "",
   "main": "script.js",
   "scripts": {
-    "start": "browser-sync -w"
+    "prebuild": "rimraf build/*",
+    "build": "tsc -w",
+    "serve": "http-server -c-1"
   },
   "repository": {
     "type": "git",
@@ -17,7 +19,8 @@
   },
   "homepage": "https://github.com/gabrielmadruga/loopity#readme",
   "devDependencies": {
-    "browser-sync": "^2.27.3",
-    "eslint": "^7.29.0"
+    "http-server": "^0.12.3",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.3.5"
   }
 }
