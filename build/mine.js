@@ -6,7 +6,7 @@ btn,
 // math
 flr, rnd, clamp, min, sin, cos, 
 // graphics
-camera, cls, spr, map, text, textc, rectfill, pal, palt, palReset, 
+camera, cls, spr, map, print, printc, rectfill, pal, palt, 
 // audio
 sfx, music, 
 // misc
@@ -281,17 +281,17 @@ function drawMenu() {
     map(0, 0, 36, 15, 8, 4);
     // difficulty chooser
     let d = difficulties[diff];
-    textc('difficulty:', 64, 64, 13);
-    textc(d.n, 64, 72, 15);
+    printc('difficulty:', 64, 64, 13);
+    printc(d.n, 64, 72, 15);
     let offset = (t % 16 < 8) ? 0 : 1;
     if (diff > 0)
         spr(16, 27 - offset, 72);
     if (diff < 3)
         spr(17, 96 + offset, 72);
     // intro info
-    textc('z to explore, x to flag mines', 64, 105, 5);
-    textc('pick your difficulty', 64, 111, 5);
-    textc('then press z or x to start', 64, 117, 5);
+    printc('z to explore, x to flag mines', 64, 105, 5);
+    printc('pick your difficulty', 64, 111, 5);
+    printc('then press z or x to start', 64, 117, 5);
 }
 const floaters = [];
 for (let i = -1; i < 15; i++) {
@@ -356,7 +356,7 @@ function drawBoard() {
                 // print mine number text
                 if (f.visited && f.mineCount > 0) {
                     let clr = text_colors[f.mineCount - 1];
-                    text(String(f.mineCount), x * 8 + 2, y * 8 + 2, clr);
+                    print(String(f.mineCount), x * 8 + 2, y * 8 + 2, clr);
                 }
                 // draw flag
                 if (s === s_flag) {
@@ -396,7 +396,7 @@ function drawHud() {
     }
     rectfill(35, 121, 92, 127, color);
     rectfill(34, 122, 93, 126, color);
-    textc(text, 64, 122, 15);
+    printc(text, 64, 122, 15);
 }
 function drawWin() {
     const minutes = flr(game.seconds / 60);
@@ -404,9 +404,9 @@ function drawWin() {
     const secstr = (secs < 10) ? '0' + secs : secs;
     const tstr = minutes + ':' + secstr;
     map(11, 0, 64 - 8, 32, 2, 2);
-    textc('you won!', 64, 56, 15);
-    textc('your time:', 64, 72, 13);
-    textc(tstr, 64, 80, 12);
+    printc('you won!', 64, 56, 15);
+    printc('your time:', 64, 72, 13);
+    printc(tstr, 64, 80, 12);
 }
 function drawGame() {
     cls();
@@ -444,7 +444,7 @@ function drawGame() {
 //-----------------------------
 // main stuff
 //-----------------------------
-start(update, draw);
+start("mine", 5, 1, update, draw, 30);
 function update() {
     t += 1;
     if (scene === 'menu') {
@@ -456,7 +456,7 @@ function update() {
 }
 function draw() {
     camera(0, 0);
-    palReset();
+    pal();
     palt(0, false);
     palt(14, true);
     if (scene === 'menu') {

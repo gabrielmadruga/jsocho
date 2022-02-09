@@ -67,12 +67,9 @@ const pixelStride = 4;
 const lineStride = 4 * bufferCanvas.width;
 const spriteSizePx = 8;
 const audioCtx = new AudioContext();
-if (!ctx)
-    throw new Error("Failed to create AudioContext");
 let assets;
-async function start(update, draw) {
-    assets = await loadAssets(); // TODO: progress callbacks?
-    const targetFPS = 30;
+async function start(name, sfxCount, musicCount, update, draw, targetFPS) {
+    assets = await loadAssets(name, sfxCount, musicCount); // TODO: progress callbacks?
     const msPerFrame = 1000 / targetFPS;
     const updateIntervalId = window.setInterval(() => {
         update();
@@ -85,12 +82,12 @@ async function start(update, draw) {
         });
     }, msPerFrame);
 }
-async function loadAssets() {
+async function loadAssets(name, sfxCount, musicCount) {
     const datas = await Promise.all([
-        loadImageData('assets/font.png'),
-        loadImageData('assets/sprites.png'),
-        loadAudios(audioCtx, 5, 1),
-        loadMap()
+        loadImageData(`assets/${name}/font.png`),
+        loadImageData(`assets/${name}/sprites.png`),
+        loadAudios(name, audioCtx, sfxCount, musicCount),
+        loadMap(name)
     ]);
     const assets = {
         fontPixels: datas[0].data,
@@ -100,8 +97,8 @@ async function loadAssets() {
     };
     return assets;
 }
-let max = Math.max;
-let min = Math.min;
+const max = Math.max;
+const min = Math.min;
 function mid(x, y, z) {
     if (x > y) { // y, x
         if (y > z) { // z, y, x
@@ -136,14 +133,89 @@ function clamp(n, low, high) {
     }
     return result;
 }
-let flr = Math.floor;
-let ceil = Math.ceil;
-let sqrt = Math.sqrt;
-let abs = Math.abs;
-let cos = (n) => Math.cos(n * 2 * Math.PI);
-let sin = (n) => -Math.sin(n * 2 * Math.PI);
-function rnd(x) {
+const flr = Math.floor;
+function round(x) {
+    return flr(x + 0.5);
+}
+const ceil = Math.ceil;
+const sqrt = Math.sqrt;
+const abs = Math.abs;
+const cos = (n) => Math.cos(n * 2 * Math.PI);
+const sin = (n) => -Math.sin(n * 2 * Math.PI);
+// (inclusive of 0, but not x)
+function rnd(x = 1) {
     return Math.random() * x;
+}
+function rndf(l, h) {
+    return l + rnd(h - l);
+}
+function rndi(l, h) {
+    return flr(rndf(l, h + 1));
+}
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+function v(x, y) {
+    if (Array.isArray(x)) {
+        if (x.length !== 2)
+            throw new Error("invalid array size for V2");
+        const result = [...x];
+        result.x = x[0];
+        result.y = x[1];
+        return result;
+    }
+    else if (y !== undefined) {
+        const result = [x, y];
+        result.x = x;
+        result.y = y;
+        return result;
+    }
+    else {
+        throw new Error("missing parameter y in V2");
+    }
+}
+function vma(magnitude, angle) {
+    return v(cos(angle) * magnitude, sin(angle) * magnitude);
+}
+function v_add(v1, v2) {
+    return v([v1.x + v2.x, v1.y + v2.y]);
+}
+function v_sub(v1, v2) {
+    return v(v1.x - v2.x, v1.y - v2.y);
+}
+function v_mul(v1, m) {
+    return v(v1.x * m, v1.y * m);
+}
+function v_div(v1, d) {
+    return v(v1.x / d, v1.y / d);
+}
+function v_neg(v1) {
+    return v(-v1.x, -v1.y);
+}
+// dot product
+function v_dot(v1, v2) {
+    return v1.x * v2.x + v1.y * v2.y;
+}
+// normalization
+function v_norm(v1) {
+    const len = sqrt(v1.x * v1.x + v1.y * v1.y);
+    return v(v1.x / len, v1.y / len);
+}
+// rotation
+function v_rotr(v1) {
+    return v(-v1.y, v1.x);
+}
+function v_lensq(v1) {
+    return v1.x * v1.x + v1.y * v1.y;
+}
+function v_len(v1) {
+    return sqrt(v1.x * v1.x + v1.y * v1.y);
+}
+function v_str(v1) {
+    return `v(${v1.x}, ${v1.y})`;
+}
+function v_lerp(a, b, t) {
+    return v_add(a, v_mul(v_sub(b, a), t));
 }
 function sfx(n) {
     let sampleSource = audioCtx.createBufferSource();
@@ -165,7 +237,7 @@ function cls(color = 0) {
         pixelbuffer[i + 3] = 255; // remove transparency
     }
 }
-function text(str, x, y, color) {
+function print(str, x, y, color) {
     const glyphOrder = "ññññññññññññññññ" +
         "ññññññññññññññññ" +
         ` !"#$%&'()*+,-./` +
@@ -202,10 +274,10 @@ function text(str, x, y, color) {
         copyRectMasked(gx, gy, x + (c * 4), y, tileWidth, tileHeight, assets.fontPixels, pixelbuffer, 7, color);
     }
 }
-function textc(str, cx, y, color) {
+function printc(str, cx, y, color) {
     const halfStrScreenLengthPx = str.length * 2;
     let x = cx - halfStrScreenLengthPx;
-    text(str, x, y, color);
+    print(str, x, y, color);
 }
 function spr(n, dx, dy, w = 1, h = 1) {
     dx = flr(dx);
@@ -216,6 +288,20 @@ function spr(n, dx, dy, w = 1, h = 1) {
     let sizeX = w * spriteSizePx;
     let sizeY = h * spriteSizePx;
     copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer);
+}
+function rect(x0, y0, x1, y1, color = 0 /* Black */) {
+    x0 = flr(x0);
+    y0 = flr(y0);
+    x1 = flr(x1);
+    y1 = flr(y1);
+    for (let x = x0; x < x1 + 1; x++) {
+        putPixel(x, y0, color, pixelbuffer);
+        putPixel(x, y1, color, pixelbuffer);
+    }
+    for (let y = y0; y < y1 + 1; y++) {
+        putPixel(x0, y, color, pixelbuffer);
+        putPixel(x1, y, color, pixelbuffer);
+    }
 }
 function rectfill(x0, y0, x1, y1, color = 0 /* Black */) {
     x0 = flr(x0);
@@ -231,16 +317,21 @@ function rectfill(x0, y0, x1, y1, color = 0 /* Black */) {
 function camera(x, y) {
     _state.camera = { x: -flr(x), y: -flr(y) };
 }
-function palReset() {
-    _state.drawPaletteRemap = palCreate();
-    _state.displayPaletteRemap = palCreate();
-}
-function pal(c0, c1, p) {
-    if (p === 1) {
-        _state.drawPaletteRemap[c0] = c1;
+function pal(c0, c1, p = 0) {
+    if (c0 === undefined) {
+        _state.drawPaletteRemap = palCreate();
+        _state.displayPaletteRemap = palCreate();
     }
     else {
-        _state.displayPaletteRemap[c0] = c1;
+        if (c1 === undefined) {
+            throw new Error("missing parameter c1 in call to pal");
+        }
+        if (p === 1) {
+            _state.drawPaletteRemap[c0] = c1;
+        }
+        else {
+            _state.displayPaletteRemap[c0] = c1;
+        }
     }
 }
 function palt(c, t) {
@@ -272,6 +363,15 @@ function btn(n) {
         return !!_state.buttons[map[n]];
     }
 }
+function dget(i) {
+    return window.localStorage.getItem(String(i));
+}
+function dset(i, value) {
+    window.localStorage.setItem(String(i), value);
+}
+window.addEventListener('click', function clickListener(e) {
+    audioCtx.resume();
+});
 window.addEventListener('keydown', function keydownListener(e) {
     _state.buttons[e.code] = true;
 });
@@ -375,8 +475,8 @@ async function loadImageData(path) {
     let imageData = bufferCtx.getImageData(0, 0, buffer.width, buffer.height);
     return imageData;
 }
-async function loadMap() {
-    let response = await fetch("assets/map.txt");
+async function loadMap(name) {
+    let response = await fetch(`assets/${name}/map.txt`);
     let mapStr = await response.text();
     mapStr = mapStr.replace(/(\r\n|\n|\r)/gm, "");
     for (let i = 0; i < mapStr.length; i += 2) {
@@ -394,15 +494,15 @@ async function loadAudioFile(audioContext, filepath) {
     let audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     return audioBuffer;
 }
-async function loadAudios(audioContext, sfxCount, musicCount) {
+async function loadAudios(name, audioContext, sfxCount, musicCount) {
     let promises = [];
     for (let i = 0; i < sfxCount; i++) {
-        let filename = `assets/sfx${i}.wav`;
+        let filename = `assets/${name}/sfx${i}.wav`;
         let promise = loadAudioFile(audioContext, filename);
         promises.push(promise);
     }
     for (let i = 0; i < musicCount; i++) {
-        let filename = `assets/music${i}.wav`;
+        let filename = `assets/${name}/music${i}.wav`;
         let promise = loadAudioFile(audioContext, filename);
         promises.push(promise);
     }
@@ -435,11 +535,15 @@ start,
 // input
 btn, 
 // math
-flr, rnd, clamp, min, max, sin, cos, 
+flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, sin, cos, sqrt, abs, 
+// vector
+v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp, 
 // graphics
-camera, cls, spr, map, text, textc, rectfill, pal, palt, palReset, 
+camera, cls, spr, map, print, printc, rect, rectfill, pal, palt, 
 // audio
 sfx, music, 
+// cartdata
+dset, dget, 
 // misc
 counterGet, counterSet, };
 //# sourceMappingURL=engine.js.map
