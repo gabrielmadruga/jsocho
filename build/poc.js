@@ -2,7 +2,7 @@ import {
 // entry point
 start, 
 // math
-flr, rnd, abs, 
+flr, round, rnd, min, max, abs, 
 // vector
 v, v_sub, v_mul, v_dot, v_lensq, v_lerp, cls, spr, map, print, rect, rectfill, palt, dget, } from "./engine.js";
 // TODO: cartdata("kzgpckv2")
@@ -17,7 +17,7 @@ function index_add(idx, prop, elem) {
 }
 // calls a method on an object, if it exists
 function event(e, evt, ...args) {
-    let fn = e && e[evt];
+    const fn = e && e[evt];
     if (typeof fn === "function") {
         return fn(e, args);
     }
@@ -78,8 +78,8 @@ function min_by(seq, key) {
     let mk = 32767;
     let me = null;
     for (let i = 0; i < seq.length; i++) {
-        let e = seq[i];
-        let k = key(e);
+        const e = seq[i];
+        const k = key(e);
         if (k < mk) {
             mk = k;
             me = e;
@@ -108,8 +108,8 @@ function sort_by(seq, key) {
 //////////////////////////////
 // directions
 //////////////////////////////
-const dirs = [v(-1, 0), v(1, 0), v(0, -1), v(0, 1),];
-const inverse = [1, 0, 3, 2,]; // TODO: name is missleading, as they are indexes
+const dirs = [v(-1, 0), v(1, 0), v(0, -1), v(0, 1)];
+const inverse = [1, 0, 3, 2]; // TODO: name is missleading, as they are indexes
 function randomizer(range) {
     const randomizer = {
         ctr: 0,
@@ -139,7 +139,7 @@ function randomizer_next(exclude) {
         if (rnd() < prob) {
             const e = this.es[i];
             if (e !== exclude) {
-                this.last[i] = this.ctr - (this.no_repeats && this.looseness || 0);
+                this.last[i] = this.ctr - ((this.no_repeats && this.looseness) || 0);
                 this.ctr += this.looseness;
                 return e;
             }
@@ -188,7 +188,7 @@ function e_new() {
         pop: false,
         tags: [],
         parent: null,
-        children: []
+        children: [],
     };
     return e;
 }
@@ -204,13 +204,26 @@ const g_entities_with = {};
 const g_entities_tagged = {};
 // a list of properties that need an "entities_with" index
 //  Array<Extract< "r1" | "r2" | "r3" | "r4" | "r5" | "r6" | "r7" | "r8" | "r9" | "layout" | "sz", keyof Entity>>
-let indexed_properties = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "layout", "sz"];
+const indexed_properties = [
+    "r1",
+    "r2",
+    "r3",
+    "r4",
+    "r5",
+    "r6",
+    "r7",
+    "r8",
+    "r9",
+    "layout",
+    "sz",
+];
 // registers a new entity, making it appear in all
 // indices and update each frame
 function e_add(e) {
     g_entities.push(e);
     for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
         const p = indexed_properties[p_i];
+        // eslint-disable-next-line no-prototype-builtins
         if (e.hasOwnProperty(p))
             index_add(g_entities_with, p, e);
     }
@@ -227,7 +240,7 @@ function e_remove(e) {
         e.children.forEach(e_remove);
     }
     if (e.parent) {
-        for (var i = 0; i < e.parent.children.length; i++) {
+        for (let i = 0; i < e.parent.children.length; i++) {
             if (e.parent.children[i] === e) {
                 e.parent.children.splice(i, 1);
             }
@@ -241,7 +254,7 @@ function e_remove(e) {
         }
     }
     for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
-        let p = indexed_properties[p_i];
+        const p = indexed_properties[p_i];
         if (e[p]) {
             for (let i = 0; i < g_entities_with[p].length; i++) {
                 if (e === g_entities_with[p][i]) {
@@ -252,7 +265,7 @@ function e_remove(e) {
         }
     }
     for (let t_i = 0; t_i < e.tags.length; t_i++) {
-        let t = e.tags[t_i];
+        const t = e.tags[t_i];
         for (let i = 0; i < g_entities_tagged[t].length; i++) {
             if (e === g_entities_tagged[t][i]) {
                 g_entities_tagged[t].splice(i, 1);
@@ -291,13 +304,13 @@ function r_render_all() {
     // render each of the rendering layers
     for (let z = 1; z < 9; z++) {
         const prop = `r${z}`;
-        let ordIndex = {};
+        const ordIndex = {};
         let minOrd = 127;
         let maxOrd = 0;
         const entities_rz = g_entities_with[prop] || [];
         for (let ent_i = 0; ent_i < entities_rz.length; ent_i++) {
             const ent = entities_rz[ent_i];
-            let order = ent.pos && flr(ent.pos.y) || 0;
+            let order = (ent.pos && flr(ent.pos.y)) || 0;
             if (ent.pop)
                 order = 0;
             index_add(ordIndex, String(order), ent);
@@ -310,7 +323,7 @@ function r_render_all() {
             const p = String(o);
             if (ordIndex[p]) {
                 for (let ent_i = 0; ent_i < ordIndex[p].length; ent_i++) {
-                    let ent = ordIndex[p][ent_i];
+                    const ent = ordIndex[p][ent_i];
                     ent[prop].apply(ent); // TODO: is there a way to type? seems way harder
                     set_palette();
                 }
@@ -335,7 +348,8 @@ function l_apply(e) {
     const lpos = e.lpos || e.pos;
     const diff = v_sub(e.pos, lpos);
     const diff_len_sq = v_dot(diff, diff);
-    if (diff_len_sq < 0.25) { // TODO: why do this? and why clone lpos?
+    if (diff_len_sq < 0.25) {
+        // TODO: why do this? and why clone lpos?
         e.pos = { ...lpos };
     }
     else {
@@ -354,44 +368,46 @@ function l_apply(e) {
 // //////////////////////////////
 // // drawing shadows
 // //////////////////////////////
-// function shadow(x1,y1,x2,y2,plt)
-//  if x2-x1>63 then
-//   shadow(x1,y1,x1+63,y2,plt)
-//   shadow(x1+64,y1,x2,y2,plt)
-//   return
-//  end
-//  x1,x2,y1,y2=
-//   round(x1),round(x2),
-//   round(y1),round(y2)
-//  local al,ar=0,0
-//  if x1%2==1 then
-//   x1-=1
-//   al=1
-//  end
-//  if x2%2==0 then
-//   x2+=1
-//   ar=1
-//  end
-//  // copy to spritemem
-//  local memw=(x2-x1+1)/2
-//  local saddr=0x6000+shl(y1,6)+x1/2
-//  local daddr=0x1800
-//  for y=y1,y2 do
-//   memcpy(daddr,saddr,memw)
-//   saddr+=64
-//   daddr+=64
-//  end
-//  // copy back to screen
-//  // with shifted palette
-//  set_palette(plt)
-//  palt(13,false)
-//  local w,h=x2-x1+1-al-ar,y2-y1+1
-//  sspr(al,96,w,h,x1+al,y1)
-//  set_palette()
-// end
-// obfn.sh=shadow
-// //////////////////////////////
-// //////////////////////////////
+// function shadow(x1: number, y1: number, x2: number, y2: number, plt: number) {
+//     if (x2 - x1 > 63) {
+//         shadow(x1, y1, x1 + 63, y2, plt);
+//         shadow(x1 + 64, y1, x2, y2, plt);
+//         return;
+//     }
+//     x1 = round(x1);
+//     x2 = round(x2);
+//     y1 = round(y1);
+//     y2 = round(y2);
+//     let al = 0;
+//     let ar = 0;
+//     if (x1 % 2 == 1) {
+//         x1 -= 1;
+//         al = 1;
+//     }
+//     if (x2 % 2 == 0) {
+//         x2 += 1;
+//         ar = 1;
+//     }
+//     // copy to spritemem
+//     local memw = (x2 - x1 + 1) / 2
+//     local saddr = 0x6000 + shl(y1, 6) + x1 / 2
+//     local daddr = 0x1800
+//     for y = y1, y2 do
+//         memcpy(daddr, saddr, memw)
+//     saddr += 64
+//     daddr += 64
+//     end
+//     // copy back to screen
+//     // with shifted palette
+//     set_palette(plt)
+//     palt(13, false)
+//     local w, h = x2 - x1 + 1 - al - ar, y2 - y1 + 1
+//     sspr(al, 96, w, h, x1 + al, y1)
+//     set_palette()
+// }
+// obfn.sh = shadow
+//////////////////////////////
+//////////////////////////////
 // //////////////////////////////
 // // generic children work
 // //////////////////////////////
@@ -414,7 +430,7 @@ function l_apply(e) {
 function background() {
     const bg = {
         ...e_new(),
-        r1: background_r1
+        r1: background_r1,
     };
     return bg;
 }
@@ -445,7 +461,7 @@ function pointer() {
         mode: "keys",
         pmode: "keys",
         idle: pointer_idle,
-        choose: pointer_choose
+        choose: pointer_choose,
     };
     return pointer;
 }
@@ -495,7 +511,7 @@ function pointer_script_control() {
         this.delay -= 1;
     }
     else {
-        let op = this.s_pop();
+        const op = this.s_pop();
         if (op)
             this.s_op(op);
     }
@@ -596,15 +612,15 @@ function particles_spawn(p) {
     this.ps[rnd()] = p;
 }
 function particles_r8() {
-    for (let key in this.ps) {
+    for (const key in this.ps) {
         const p = this.ps[key];
-        let pos = p.p;
+        const pos = p.p;
         if (p.radius) {
             // TODO:
             // circfill(pos.x, pos.y, p.radius * p.l, p.clr)
         }
         if (p.sradius) {
-            let s = 1 - abs(p.l - 0.5) * 2;
+            const s = 1 - abs(p.l - 0.5) * 2;
             // circfill(pos.x, pos.y, p.sradius * s, p.clr)
         }
     }
@@ -616,7 +632,10 @@ function animation() {
         at: 0,
         locked: false,
         done: false,
-        idle: animation_idle
+        elems: [],
+        idle: animation_idle,
+        dismiss: animation_dismiss,
+        r8: animation_r8,
     };
     return animation;
 }
@@ -627,47 +646,50 @@ function animation_idle() {
     }
     this.done = this.at > this.dur * 2.5;
 }
-//  function animation:dismiss()
-//   self.locked=false
-//  end
-//  function animation:r8()
-//   local t=1-self.at/self.dur
-//   t=t^5
-//   for e in all(self.elems) do
-//    local dt=t*128
-//    if (e.sym) dt=abs(dt)
-//    animation[e.fn](e.d*dt,e)
-//   end
-//  end
-// function animation.sh(d,o)
-//  local p=o.p+d
-//  local c=p+o.s
-//  p.x=max(round(p.x),0)
-//  p.y=max(round(p.y),0)
-//  c.x=min(round(c.x),127)
-//  c.y=min(round(c.y),127)
-//  if p.x~=c.x and p.y~=c.y then
-//   shadow(p.x,p.y,c.x,c.y,o.plt)
-//  end
-// end
-// function animation.prcd(d,o)
-//  o.sp=
-//   g_chooser.pmode=="mouse"
-//    and 41 or 25
-//  animation.dspr(d,o)
-// end
-// function animation.dspr(d,o)
-//  if (o.blink and g_t%(o.blink*2)<o.blink) return
-//  spr(o.sp,o.p.x+d.x,o.p.y+d.y,o.s.x,o.s.y)
-// end
-// function animation.pdsh(d,o)
-//  printdsh(o.t,o.p.x+d.x,o.p.y+d.y,o.c1,o.c2,o.a)
-// end
-// function animation.bar(d,o)
-//  local p=o.p+d
-//  local c=p+o.s
-//  rectfill(p.x,p.y,c.x,c.y,o.c)
-// end
+function animation_dismiss() {
+    this.locked = false;
+}
+function animation_r8() {
+    let t = 1 - this.at / this.dur;
+    t = t ^ 5;
+    for (const e of this.elems) {
+        let dt = t * 128;
+        if (e.sym) {
+            dt = abs(dt);
+        }
+        animation_functions[e.fn](e.d * dt, e);
+    }
+}
+const animation_functions = {
+    sh(d, o) {
+        const p = o.p + d;
+        const c = p + o.s;
+        p.x = max(round(p.x), 0);
+        p.y = max(round(p.y), 0);
+        c.x = min(round(c.x), 127);
+        c.y = min(round(c.y), 127);
+        if (p.x !== c.x && p.y !== c.y) {
+            // shadow(p.x, p.y, c.x, c.y, o.plt);
+        }
+    },
+    prcd(d, o) {
+        o.sp = (g_chooser.pmode == "mouse" && 41) || 25;
+        animation_functions.dspr(d, o);
+    },
+    dspr(d, o) {
+        if (o.blink && g_t % (o.blink * 2) < o.blink)
+            return;
+        spr(o.sp, o.p.x + d.x, o.p.y + d.y, o.s.x, o.s.y);
+    },
+    pdsh(d, o) {
+        printdsh(o.t, o.p.x + d.x, o.p.y + d.y, o.c1, o.c2, o.a);
+    },
+    bar(d, o) {
+        const p = o.p + d;
+        const c = p + o.s;
+        rectfill(p.x, p.y, c.x, c.y, o.c);
+    },
+};
 // //////////////////////////////
 // // actual animations
 // //////////////////////////////
@@ -1306,17 +1328,16 @@ function animation_idle() {
 // //////////////////////////////
 // // menu stuff
 // //////////////////////////////
-// anims.logo=ob[[
-//  o(fn="sh",d=v(0,-1),p=v(0,18),s=v(127,2),plt=2),
-//  o(fn="sh",d=v(0,-1),p=v(0,20),s=v(127,22),plt=3),
-//  o(fn="bar",d=v(0,-1),p=v(0,18),s=v(127,0),c=0),
-//  o(fn="bar",d=v(0,-1),p=v(0,43),s=v(127,0),c=0),
-//  o(fn="dspr",d=v(0,1),p=v(44,17),s=v(5,4),sp=10),
-// ]]
 function logo() {
     const logo = animation();
     logo.dur = 45;
-    // logo.elems = anims.logo;
+    logo.elems = [
+        { fn: "sh", d: v(0, -1), p: v(0, 18), s: v(127, 2), plt: 2 },
+        { fn: "sh", d: v(0, -1), p: v(0, 20), s: v(127, 22), plt: 3 },
+        { fn: "bar", d: v(0, -1), p: v(0, 18), s: v(127, 2), c: 0 },
+        { fn: "bar", d: v(0, -1), p: v(0, 43), s: v(127, 2), c: 0 },
+        { fn: "dspr", d: v(0, 1), p: v(44, 17), s: v(5, 4), spr: 10 },
+    ];
     logo.locked = true;
     return logo;
 }
@@ -1333,7 +1354,7 @@ function logo() {
 function menu_text() {
     const menu_text = {
         ...e_new(),
-        r8: menu_text_r8
+        r8: menu_text_r8,
     };
     return menu_text;
 }
@@ -1355,12 +1376,12 @@ function menu_op(pos, text) {
         pos,
         sz: v(80, 10),
         pointer_off: v(21, 0),
-        r8: menu_op_r8
+        r8: menu_op_r8,
     };
     return menu_op;
 }
 function menu_op_r8() {
-    const sh = this.selected && 3 || 2;
+    const sh = (this.selected && 3) || 2;
     const p = this.pos;
     //   shadow(p.x,p.y-1,p.x+71,p.y+8,sh); TODO:
     printdsh(this.text, p.x + 36, p.y + 1, 10, 4, 0.5);
@@ -1536,7 +1557,7 @@ function runner() {
         unblock: runner_unblock,
         delay: runner_delay,
         waitforbtn: runner_waitforbtn,
-        choose: runner_choose
+        choose: runner_choose,
     };
     return runner;
 }
@@ -1561,7 +1582,7 @@ function runner_delay(dur) {
                 this.done = this.t >= dur;
                 if (this.done)
                     g_runner.unblock();
-            }
+            },
         };
         return delay;
     }
@@ -1577,7 +1598,7 @@ function runner_waitforbtn() {
                     this.done = true;
                     g_runner.unblock();
                 }
-            }
+            },
         };
         return delay;
     }

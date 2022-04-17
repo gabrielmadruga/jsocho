@@ -15,7 +15,7 @@
 //     "#ff77a8",
 //     "#ffccaa"
 function palCreate() {
-    let result = [];
+    const result = [];
     for (let i = 0; i < 16; i++) {
         result.push(i);
     }
@@ -37,7 +37,7 @@ const ColorsRGB = [
     [41, 173, 255],
     [131, 118, 156],
     [255, 119, 168],
-    [255, 204, 170]
+    [255, 204, 170],
 ];
 const _state = {
     camera: { x: 0, y: 0 },
@@ -45,20 +45,20 @@ const _state = {
     transparentColors: [true],
     displayPaletteRemap: palCreate(),
     buttons: {},
-    counters: {}
+    counters: {},
 };
-const canvas = document.getElementById('canvas');
+const canvas = document.getElementById("canvas");
 canvas.width = 128;
 canvas.height = 128;
 canvas.style.width = `${128 * 4}px`;
 canvas.style.height = `${128 * 4}px`;
-const canvasCtx = canvas.getContext('2d');
+const canvasCtx = canvas.getContext("2d");
 if (!canvasCtx)
     throw new Error("Failed to _canvas.getContext");
-const bufferCanvas = document.createElement('canvas');
+const bufferCanvas = document.createElement("canvas");
 bufferCanvas.width = 128;
 bufferCanvas.height = 128;
-const ctx = bufferCanvas.getContext('2d');
+const ctx = bufferCanvas.getContext("2d");
 if (!ctx)
     throw new Error("Failed to _bufferCanvas.getContext");
 const bufferImageData = ctx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
@@ -71,14 +71,15 @@ let assets;
 async function start(name, sfxCount, musicCount, update, draw, targetFPS) {
     assets = await loadAssets(name, sfxCount, musicCount); // TODO: progress callbacks?
     const msPerFrame = 1000 / targetFPS;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const updateIntervalId = window.setInterval(() => {
         update();
         countersUpdate();
         window.requestAnimationFrame(() => {
             draw();
             applyDisplayPaletteRemapping();
-            ctx.putImageData(bufferImageData, 0, 0);
-            canvasCtx.drawImage(bufferCanvas, 0, 0, canvas.width, canvas.height);
+            ctx?.putImageData(bufferImageData, 0, 0);
+            canvasCtx?.drawImage(bufferCanvas, 0, 0, canvas.width, canvas.height);
         });
     }, msPerFrame);
 }
@@ -87,38 +88,45 @@ async function loadAssets(name, sfxCount, musicCount) {
         loadImageData(`assets/${name}/font.png`),
         loadImageData(`assets/${name}/sprites.png`),
         loadAudios(name, audioCtx, sfxCount, musicCount),
-        loadMap(name)
+        loadMap(name),
     ]);
     const assets = {
         fontPixels: datas[0].data,
         spritesPixels: datas[1].data,
         sfxs: datas[2].sfxBuffers,
-        musics: datas[2].musicBuffers
+        musics: datas[2].musicBuffers,
     };
     return assets;
 }
 const max = Math.max;
 const min = Math.min;
 function mid(x, y, z) {
-    if (x > y) { // y, x
-        if (y > z) { // z, y, x
+    if (x > y) {
+        // y, x
+        if (y > z) {
+            // z, y, x
             return y;
         }
-        else if (x > z) { // y, z, x
+        else if (x > z) {
+            // y, z, x
             return z;
         }
         else {
             return x; // y, x, z
         }
     }
-    else { // x, y
-        if (x > z) { // z, x, y
+    else {
+        // x, y
+        if (x > z) {
+            // z, x, y
             return x;
         }
-        else if (y > z) { // x, z, y
+        else if (y > z) {
+            // x, z, y
             return z;
         }
-        else { // x, y, z
+        else {
+            // x, y, z
             return y;
         }
     }
@@ -184,12 +192,14 @@ function v_sub(v1, v2) {
     return v(v1.x - v2.x, v1.y - v2.y);
 }
 function v_mul(v1, m) {
+    // or scale
     return v(v1.x * m, v1.y * m);
 }
 function v_div(v1, d) {
     return v(v1.x / d, v1.y / d);
 }
 function v_neg(v1) {
+    // or unary minus
     return v(-v1.x, -v1.y);
 }
 // dot product
@@ -218,13 +228,13 @@ function v_lerp(a, b, t) {
     return v_add(a, v_mul(v_sub(b, a), t));
 }
 function sfx(n) {
-    let sampleSource = audioCtx.createBufferSource();
+    const sampleSource = audioCtx.createBufferSource();
     sampleSource.buffer = assets.sfxs[n];
     sampleSource.connect(audioCtx.destination);
     sampleSource.start();
 }
 function music(n) {
-    let sampleSource = audioCtx.createBufferSource();
+    const sampleSource = audioCtx.createBufferSource();
     sampleSource.buffer = assets.musics[n];
     sampleSource.connect(audioCtx.destination);
     sampleSource.start();
@@ -244,7 +254,7 @@ function print(str, x, y, color) {
         "0123456789=;<=>?" +
         "@ABCDEFGHIJKLMNO" +
         "PQRSTUVWXYZ[\\]^_" +
-        "\`abcdefghijklmno" +
+        "`abcdefghijklmno" +
         "pqrstuvwxyz{|}~∎" +
         "ññññññññññññññññ" +
         "ññññññññññññññññ" +
@@ -261,7 +271,7 @@ function print(str, x, y, color) {
     x = flr(x);
     y = flr(y);
     for (let c = 0; c < str.length; c++) {
-        let ch = str[c];
+        const ch = str[c];
         // Find character index in _font.bitmap using _font.glyphOrder
         let pos = 32; // 32 === space
         for (let g = 0; g < glyphOrder.length; g++) {
@@ -269,24 +279,24 @@ function print(str, x, y, color) {
                 pos = g;
             }
         }
-        let gx = (pos % 16) * (tileWidth + glyphSeparationX);
-        let gy = flr(pos / 16) * (tileHeight + glyphSeparationY);
-        copyRectMasked(gx, gy, x + (c * 4), y, tileWidth, tileHeight, assets.fontPixels, pixelbuffer, 7, color);
+        const gx = (pos % 16) * (tileWidth + glyphSeparationX);
+        const gy = flr(pos / 16) * (tileHeight + glyphSeparationY);
+        copyRectMasked(gx, gy, x + c * 4, y, tileWidth, tileHeight, assets.fontPixels, pixelbuffer, 7, color);
     }
 }
 function printc(str, cx, y, color) {
     const halfStrScreenLengthPx = str.length * 2;
-    let x = cx - halfStrScreenLengthPx;
+    const x = cx - halfStrScreenLengthPx;
     print(str, x, y, color);
 }
 function spr(n, dx, dy, w = 1, h = 1) {
     dx = flr(dx);
     dy = flr(dy);
-    let spritesPerRow = 16;
-    let sx = (n % spritesPerRow) * spriteSizePx;
-    let sy = flr(n / spritesPerRow) * spriteSizePx;
-    let sizeX = w * spriteSizePx;
-    let sizeY = h * spriteSizePx;
+    const spritesPerRow = 16;
+    const sx = (n % spritesPerRow) * spriteSizePx;
+    const sy = flr(n / spritesPerRow) * spriteSizePx;
+    const sizeX = w * spriteSizePx;
+    const sizeY = h * spriteSizePx;
     copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer);
 }
 function rect(x0, y0, x1, y1, color = 0 /* Black */) {
@@ -337,24 +347,31 @@ function pal(c0, c1, p = 0) {
 function palt(c, t) {
     _state.transparentColors[c] = t;
 }
-let _map = [[]];
+const _map = [[]];
 function map(cell_x, cell_y, sx, sy, cell_w, cell_h) {
     for (let cy = 0; cy < cell_h; cy++) {
-        let y = sy + cy * spriteSizePx;
+        const y = sy + cy * spriteSizePx;
         for (let cx = 0; cx < cell_w; cx++) {
-            let s = _map[cell_x + cx][cell_y + cy];
-            let x = sx + cx * spriteSizePx;
+            const s = _map[cell_x + cx][cell_y + cy];
+            const x = sx + cx * spriteSizePx;
             spr(s, x, y);
         }
     }
 }
 function btn(n) {
-    let map = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyZ', 'KeyX'];
+    const map = [
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "KeyZ",
+        "KeyX",
+    ];
     if (n === undefined) {
         let result = 0;
         for (let i = 0; i < 6; i++) {
             if (_state.buttons[map[i]]) {
-                result = (result | (1 << i));
+                result = result | (1 << i);
             }
         }
         return result;
@@ -369,13 +386,13 @@ function dget(i) {
 function dset(i, value) {
     window.localStorage.setItem(String(i), value);
 }
-window.addEventListener('click', function clickListener(e) {
+window.addEventListener("click", function clickListener(_e) {
     audioCtx.resume();
 });
-window.addEventListener('keydown', function keydownListener(e) {
+window.addEventListener("keydown", function keydownListener(e) {
     _state.buttons[e.code] = true;
 });
-window.addEventListener('keyup', function keydownListener(e) {
+window.addEventListener("keyup", function keydownListener(e) {
     _state.buttons[e.code] = false;
 });
 function putPixel(x, y, color, dData) {
@@ -385,22 +402,22 @@ function putPixel(x, y, color, dData) {
         return;
     if (y < 0 || y >= bufferCanvas.height)
         return;
-    let i = x * pixelStride + y * lineStride;
-    let colorRGB = ColorsRGB[color];
+    const i = x * pixelStride + y * lineStride;
+    const colorRGB = ColorsRGB[color];
     for (let j = 0; j < 3; j++) {
         dData[i + j] = colorRGB[j];
     }
 }
 function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData) {
     for (let y = 0; y < sizeY; y++) {
-        let sLineStride = (sy + y) * lineStride;
+        const sLineStride = (sy + y) * lineStride;
         for (let x = 0; x < sizeX; x++) {
-            let s = (sx + x) * pixelStride + sLineStride;
-            let sColorRGB = [];
+            const s = (sx + x) * pixelStride + sLineStride;
+            const sColorRGB = [];
             for (let j = 0; j < 3; j++) {
                 sColorRGB.push(sData[s + j]);
             }
-            let colorAfterMapping = _state.drawPaletteRemap[colorFromRGB(sColorRGB)];
+            const colorAfterMapping = _state.drawPaletteRemap[colorFromRGB(sColorRGB)];
             if (_state.transparentColors[colorAfterMapping])
                 continue;
             putPixel(dx + x, dy + y, colorAfterMapping, dData);
@@ -409,10 +426,10 @@ function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData) {
 }
 function copyRectMasked(sx, sy, dx, dy, sizeX, sizeY, sData, dData, maskColor, outColor) {
     for (let y = 0; y < sizeY; y++) {
-        let sLineStride = (sy + y) * lineStride;
+        const sLineStride = (sy + y) * lineStride;
         for (let x = 0; x < sizeX; x++) {
-            let s = (sx + x) * pixelStride + sLineStride;
-            let sColorRGB = [];
+            const s = (sx + x) * pixelStride + sLineStride;
+            const sColorRGB = [];
             for (let j = 0; j < 3; j++) {
                 sColorRGB.push(sData[s + j]);
             }
@@ -424,7 +441,7 @@ function copyRectMasked(sx, sy, dx, dy, sizeX, sizeY, sData, dData, maskColor, o
 }
 function colorFromRGB(rgb) {
     for (let c = 0; c < ColorsRGB.length; c++) {
-        let colorRGB = ColorsRGB[c];
+        const colorRGB = ColorsRGB[c];
         let same = true;
         for (let j = 0; j < 3; j++) {
             same &&= colorRGB[j] === rgb[j];
@@ -437,12 +454,12 @@ function colorFromRGB(rgb) {
 }
 function applyDisplayPaletteRemapping() {
     for (let i = 0; i < pixelbuffer.length; i += 4) {
-        let colorRGB = [];
+        const colorRGB = [];
         for (let j = 0; j < 3; j++) {
             colorRGB.push(pixelbuffer[i + j]);
         }
-        let colorAfterRemap = _state.displayPaletteRemap[colorFromRGB(colorRGB)];
-        let colorAfterRGB = ColorsRGB[colorAfterRemap];
+        const colorAfterRemap = _state.displayPaletteRemap[colorFromRGB(colorRGB)];
+        const colorAfterRGB = ColorsRGB[colorAfterRemap];
         for (let j = 0; j < 3; j++) {
             pixelbuffer[i + j] = colorAfterRGB[j];
         }
@@ -454,61 +471,61 @@ async function loadImage(path) {
         function errorHandler() {
             reject(new Error("Failed to load image: " + path));
         }
-        img.addEventListener('error', errorHandler, { once: true });
-        img.addEventListener('load', () => {
+        img.addEventListener("error", errorHandler, { once: true });
+        img.addEventListener("load", () => {
             resolve(img);
-            img.removeEventListener('error', errorHandler);
+            img.removeEventListener("error", errorHandler);
         }, { once: true });
         img.src = path;
     });
 }
 async function loadImageData(path) {
     const img = await loadImage(path);
-    const buffer = document.createElement('canvas');
+    const buffer = document.createElement("canvas");
     buffer.width = img.naturalWidth;
     buffer.height = img.naturalHeight;
-    let bufferCtx = buffer.getContext('2d');
+    const bufferCtx = buffer.getContext("2d");
     if (!bufferCtx)
         throw new Error("Failed to buffer.getContext while loading image " + path);
     bufferCtx.clearRect(0, 0, buffer.width, buffer.height);
     bufferCtx.drawImage(img, 0, 0, buffer.width, buffer.height);
-    let imageData = bufferCtx.getImageData(0, 0, buffer.width, buffer.height);
+    const imageData = bufferCtx.getImageData(0, 0, buffer.width, buffer.height);
     return imageData;
 }
 async function loadMap(name) {
-    let response = await fetch(`assets/${name}/map.txt`);
+    const response = await fetch(`assets/${name}/map.txt`);
     let mapStr = await response.text();
     mapStr = mapStr.replace(/(\r\n|\n|\r)/gm, "");
     for (let i = 0; i < mapStr.length; i += 2) {
-        let mapWidth = 128;
-        let x = i / 2 % mapWidth;
-        let y = flr(i / 2 / mapWidth);
+        const mapWidth = 128;
+        const x = (i / 2) % mapWidth;
+        const y = flr(i / 2 / mapWidth);
         if (!_map[x])
             _map[x] = [];
         _map[x][y] = parseInt(mapStr.slice(i, i + 2), 16);
     }
 }
 async function loadAudioFile(audioContext, filepath) {
-    let response = await fetch(filepath);
-    let arrayBuffer = await response.arrayBuffer();
-    let audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    const response = await fetch(filepath);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     return audioBuffer;
 }
 async function loadAudios(name, audioContext, sfxCount, musicCount) {
-    let promises = [];
+    const promises = [];
     for (let i = 0; i < sfxCount; i++) {
-        let filename = `assets/${name}/sfx${i}.wav`;
-        let promise = loadAudioFile(audioContext, filename);
+        const filename = `assets/${name}/sfx${i}.wav`;
+        const promise = loadAudioFile(audioContext, filename);
         promises.push(promise);
     }
     for (let i = 0; i < musicCount; i++) {
-        let filename = `assets/${name}/music${i}.wav`;
-        let promise = loadAudioFile(audioContext, filename);
+        const filename = `assets/${name}/music${i}.wav`;
+        const promise = loadAudioFile(audioContext, filename);
         promises.push(promise);
     }
-    let buffers = await Promise.all(promises);
-    let sfxBuffers = buffers.slice(0, sfxCount);
-    let musicBuffers = buffers.slice(-musicCount);
+    const buffers = await Promise.all(promises);
+    const sfxBuffers = buffers.slice(0, sfxCount);
+    const musicBuffers = buffers.slice(-musicCount);
     return { sfxBuffers, musicBuffers };
 }
 function counterSet(name, v) {
@@ -518,9 +535,9 @@ function counterGet(name) {
     return _state.counters[name];
 }
 function countersUpdate() {
-    let keys = Object.keys(_state.counters);
+    const keys = Object.keys(_state.counters);
     for (let i = 0; i < keys.length; i++) {
-        let key = keys[i];
+        const key = keys[i];
         if (_state.counters[key] > 0) {
             _state.counters[key] -= 1;
         }
@@ -535,7 +552,7 @@ start,
 // input
 btn, 
 // math
-flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, sin, cos, sqrt, abs, 
+flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, mid, sin, cos, sqrt, abs, 
 // vector
 v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp, 
 // graphics

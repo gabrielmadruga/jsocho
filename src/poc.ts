@@ -1,23 +1,61 @@
-
 import {
-    // types
-    Color, Vec,
-    // entry point
-    start,
-    // input
-    btn,
-    // math
-    flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, sin, cos, sqrt, abs,
-    // vector
-    v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp,
-    // graphics
-    camera, cls, spr, map, print, printc, rect, rectfill, pal, palt,
-    // audio
-    sfx, music,
-    // cartdata
-    dset, dget,
-    // misc
-    counterGet, counterSet,
+  // types
+  Color,
+  Vec,
+  // entry point
+  start,
+  // input
+  btn,
+  // math
+  flr,
+  ceil,
+  round,
+  rnd,
+  rndi,
+  rndf,
+  clamp,
+  lerp,
+  min,
+  max,
+  sin,
+  cos,
+  sqrt,
+  abs,
+  // vector
+  v,
+  vma,
+  v_add,
+  v_sub,
+  v_mul,
+  v_div,
+  v_neg,
+  v_dot,
+  v_norm,
+  v_rotr,
+  v_lensq,
+  v_len,
+  v_str,
+  v_lerp,
+  // graphics
+  camera,
+  cls,
+  spr,
+  map,
+  print,
+  printc,
+  rect,
+  rectfill,
+  pal,
+  palt,
+  // audio
+  sfx,
+  music,
+  // cartdata
+  dset,
+  dget,
+  // misc
+  counterGet,
+  counterSet,
 } from "./engine.js";
 
 // TODO: cartdata("kzgpckv2")
@@ -28,73 +66,99 @@ import {
 
 // TODO: do I really need this? can't I init things in an ordered maner? related to properly typing the indexes and tags...
 // adds an object to an index, creating a new array in the index if needed
-function index_add(idx: { [key: string]: object[] }, prop: string, elem: object) {
-    idx[prop] = idx[prop] || [];
-    idx[prop].push(elem);
+function index_add(
+  idx: { [key: string]: object[] },
+  prop: string,
+  elem: object
+) {
+  idx[prop] = idx[prop] || [];
+  idx[prop].push(elem);
 }
 
 // calls a method on an object, if it exists
 function event(e: any, evt: any, ...args: any[]) {
-    let fn = e && e[evt];
-    if (typeof fn === "function") {
-        return fn(e, args)
-    } else {
-        return fn
-    }
+  const fn = e && e[evt];
+  if (typeof fn === "function") {
+    return fn(e, args);
+  } else {
+    return fn;
+  }
 }
 
 // sets everything in props onto the object o
 function set(o: object, props: object) {
-    Object.assign(o, props);
-    return o;
+  Object.assign(o, props);
+  return o;
 }
 
 // shallow copy object
 function clone(o: object) {
-    return { ...o };
+  return { ...o };
 }
 
 // // merges two tables, second one overrides key from first
 function merge(o1: object, o2: object) {
-    return { ...o1, ...o2 }
+  return { ...o1, ...o2 };
 }
 
-type PrintPattern = { x: number, y: number, c: Color }[]
+type PrintPattern = { x: number; y: number; c: Color }[];
 
-function printdsh(t: string, x: number, y: number, c1: Color, c2: Color, a: number) {
-    const pattern = [
-        { x: 0, y: 2, c: 2 },
-        { x: -1, y: 2, c: 2 },
-        { x: -1, y: 1, c: 2 },
-        { x: -1, y: 0, c: 2 },
-        { x: -1, y: -1, c: 2 },
-        { x: 0, y: -1, c: 2 },
-        { x: 1, y: -1, c: 2 },
-        { x: 1, y: 0, c: 2 },
-        { x: 1, y: 1, c: 2 },
-        { x: 1, y: 2, c: 2 },
-        { x: 0, y: 1, c: 1 },
-        { x: 0, y: 0, c: 0 },
-    ]
-    printt(pattern, t, x, y, [c1, c2, 0], a)
+function printdsh(
+  t: string,
+  x: number,
+  y: number,
+  c1: Color,
+  c2: Color,
+  a: number
+) {
+  const pattern = [
+    { x: 0, y: 2, c: 2 },
+    { x: -1, y: 2, c: 2 },
+    { x: -1, y: 1, c: 2 },
+    { x: -1, y: 0, c: 2 },
+    { x: -1, y: -1, c: 2 },
+    { x: 0, y: -1, c: 2 },
+    { x: 1, y: -1, c: 2 },
+    { x: 1, y: 0, c: 2 },
+    { x: 1, y: 1, c: 2 },
+    { x: 1, y: 2, c: 2 },
+    { x: 0, y: 1, c: 1 },
+    { x: 0, y: 0, c: 0 },
+  ];
+  printt(pattern, t, x, y, [c1, c2, 0], a);
 }
 
-function printt(pattern: PrintPattern, txt: string, x: number, y: number, colors: Color[], a: number) {
-    x -= a * 4 * txt.length;
-    for (let d_i = 0; d_i < pattern.length; d_i++) {
-        const d = pattern[d_i];
-        print(txt, x + d.x, y + d.y, colors[d.c]);
-    }
+function printt(
+  pattern: PrintPattern,
+  txt: string,
+  x: number,
+  y: number,
+  colors: Color[],
+  a: number
+) {
+  x -= a * 4 * txt.length;
+  for (let d_i = 0; d_i < pattern.length; d_i++) {
+    const d = pattern[d_i];
+    print(txt, x + d.x, y + d.y, colors[d.c]);
+  }
 }
 
-function cutebox(x1: number, y1: number, x2: number, y2: number, cbg: Color, chl: Color, cbr: Color) {
-    // shadow(x1, y2 + 2, x2, y2 + 2, 2);
-    // shadow(x2 + 1, y2 + 1, x2 + 1, y2 + 1, 2);
-    set_palette();
-    rect(x1, y1 - 1, x2, y2 + 1, cbr);
-    rect(x1 - 1, y1, x2 + 1, y2);
-    rectfill(x1, y1, x2, y2, cbg);
-    rectfill(x1, y1, x2, y1 + (y2 - y1) / 3, chl);
+function cutebox(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cbg: Color,
+  chl: Color,
+  cbr: Color
+) {
+  // shadow(x1, y2 + 2, x2, y2 + 2, 2);
+  // shadow(x2 + 1, y2 + 1, x2 + 1, y2 + 1, 2);
+  set_palette();
+  rect(x1, y1 - 1, x2, y2 + 1, cbr);
+  rect(x1 - 1, y1, x2 + 1, y2);
+  rectfill(x1, y1, x2, y2, cbg);
+  rectfill(x1, y1, x2, y1 + (y2 - y1) / 3, chl);
 }
 
 //////////////////////////////
@@ -102,100 +166,99 @@ function cutebox(x1: number, y1: number, x2: number, y2: number, cbg: Color, chl
 //////////////////////////////
 
 function min_by(seq: any[], key: (e: any) => number) {
-    let mk = 32767;
-    let me = null;
-    for (let i = 0; i < seq.length; i++) {
-        let e = seq[i];
-        let k = key(e);
-        if (k < mk) {
-            mk = k;
-            me = e;
-        }
+  let mk = 32767;
+  let me = null;
+  for (let i = 0; i < seq.length; i++) {
+    const e = seq[i];
+    const k = key(e);
+    if (k < mk) {
+      mk = k;
+      me = e;
     }
-    return { minValue: mk, minElement: me };
+  }
+  return { minValue: mk, minElement: me };
 }
 
 function sort_by(seq: any[], key: (e: any) => number) {
-    // bubble sort, we're gonna sort small arrays anyway
-    for (let j = seq.length - 1; j > 0; j--) {
-        let sorted = true;
-        for (let i = 1; i <= j; i++) {
-            const a = seq[i - 1];
-            const b = seq[i];
-            if (key(b) < key(a)) {
-                seq[i] = a;
-                seq[i - 1] = b;
-                sorted = false;
-            }
-        }
-        if (sorted) break;
+  // bubble sort, we're gonna sort small arrays anyway
+  for (let j = seq.length - 1; j > 0; j--) {
+    let sorted = true;
+    for (let i = 1; i <= j; i++) {
+      const a = seq[i - 1];
+      const b = seq[i];
+      if (key(b) < key(a)) {
+        seq[i] = a;
+        seq[i - 1] = b;
+        sorted = false;
+      }
     }
-    return seq
+    if (sorted) break;
+  }
+  return seq;
 }
-
 
 //////////////////////////////
 // directions
 //////////////////////////////
 
-const dirs = [v(-1, 0), v(1, 0), v(0, -1), v(0, 1),];
-const inverse = [1, 0, 3, 2,]; // TODO: name is missleading, as they are indexes
+const dirs = [v(-1, 0), v(1, 0), v(0, -1), v(0, 1)];
+const inverse = [1, 0, 3, 2]; // TODO: name is missleading, as they are indexes
 
 //////////////////////////////
 // controlled randomness
 //////////////////////////////
 
 type Randomizer = {
-    ctr: number,
-    looseness: number,
-    no_repeats: boolean,
-    forced: any,
-    es: number[],
-    last: number[],
-    force: (values: number[]) => void,
-    next: (exclude: number) => number,
+  ctr: number;
+  looseness: number;
+  no_repeats: boolean;
+  forced: any;
+  es: number[];
+  last: number[];
+  force: (values: number[]) => void;
+  next: (exclude: number) => number;
 };
 
 function randomizer(range: [number, number]) {
-    const randomizer: Randomizer = {
-        ctr: 0,
-        looseness: 0.25,
-        no_repeats: false,
-        forced: [],
-        es: [],
-        last: [],
-        force: randomizer_force,
-        next: randomizer_next,
-    };
-    if (range) {
-        for (let i = range[0]; i < range[1]; i++) {
-            randomizer.es.push(i);
-            randomizer.last.push(-1);
-        }
+  const randomizer: Randomizer = {
+    ctr: 0,
+    looseness: 0.25,
+    no_repeats: false,
+    forced: [],
+    es: [],
+    last: [],
+    force: randomizer_force,
+    next: randomizer_next,
+  };
+  if (range) {
+    for (let i = range[0]; i < range[1]; i++) {
+      randomizer.es.push(i);
+      randomizer.last.push(-1);
     }
-    return randomizer;
+  }
+  return randomizer;
 }
 
 function randomizer_next(exclude: number): number {
-    if (this.forced) {
-        return this.forced.shift();
+  if (this.forced) {
+    return this.forced.shift();
+  }
+  while (true) {
+    const i = rnd(this.es.length);
+    const prob = this.ctr - this.last[i];
+    if (rnd() < prob) {
+      const e = this.es[i];
+      if (e !== exclude) {
+        this.last[i] = this.ctr - ((this.no_repeats && this.looseness) || 0);
+        this.ctr += this.looseness;
+        return e;
+      }
     }
-    while (true) {
-        const i = rnd(this.es.length);
-        const prob = this.ctr - this.last[i];
-        if (rnd() < prob) {
-            const e = this.es[i];
-            if (e !== exclude) {
-                this.last[i] = this.ctr - (this.no_repeats && this.looseness || 0);
-                this.ctr += this.looseness;
-                return e;
-            }
-        }
-    }
+  }
 }
 
 function randomizer_force(values: number[]) {
-    this.forced = values;
+  this.forced = values;
 }
 
 // TODO:
@@ -210,24 +273,24 @@ function randomizer_force(values: number[]) {
 //////////////////////////////
 
 function init_palettes() {
-    // poke addr val1, val2 .. -- Write one or more bytes to an address in base ram.
-    // If more than one parameter is provided, they are written sequentially (max: 8192)
-    // TODO:
-    // let a = 0x5000;
-    // for (let p = 0; p < 32; p++) {
-    //     for (let c = 0; c < 16; c++) {
-    //         poke(a, bor(sget(p, c), c === 13 && 0x80))
-    //         a += 1;
-    //     }
-    // }
+  // poke addr val1, val2 .. -- Write one or more bytes to an address in base ram.
+  // If more than one parameter is provided, they are written sequentially (max: 8192)
+  // TODO:
+  // let a = 0x5000;
+  // for (let p = 0; p < 32; p++) {
+  //     for (let c = 0; c < 16; c++) {
+  //         poke(a, bor(sget(p, c), c === 13 && 0x80))
+  //         a += 1;
+  //     }
+  // }
 }
 
-function set_palette(no: number = 0) {
-    // memcpy dest_addr source_addr len  -- Copy len bytes of base ram from source to dest. Sections can be overlapping
-    // shl x n -- shift left n bits (zeros come in from the right)
-    // shl(flr(no), 4) is 2^no exept for 0. 0 = 0, 1 = 16, 2 = 32
-    // TODO:
-    // memcpy(0x5f00, 0x5000 + shl(flr(no), 4), 16);
+function set_palette(no = 0) {
+  // memcpy dest_addr source_addr len  -- Copy len bytes of base ram from source to dest. Sections can be overlapping
+  // shl x n -- shift left n bits (zeros come in from the right)
+  // shl(flr(no), 4) is 2^no exept for 0. 0 = 0, 1 = 16, 2 = 32
+  // TODO:
+  // memcpy(0x5f00, 0x5000 + shl(flr(no), 4), 16);
 }
 
 //////////////////////////////
@@ -239,55 +302,54 @@ function set_palette(no: number = 0) {
 // they display and how they update each frame
 // if entity is in state "xx", its method "xx" will be called each frame
 type Entity = {
-    t: number,
-    done: boolean,
-    state: string,
-    draw_order: number,
-    llerp: number,
-    pos: Vec,
-    lpos?: Vec,
-    pop: boolean,
-    tags: string[],
-    parent: Entity | null,
-    children: Entity[],
-    // r1: () => void,
-    // r2: () => void,
-    // r3: () => void,
-    // r4: () => void,
-    // r5: () => void,
-    // r6: () => void,
-    // r7: () => void,
-    // r8: () => void,
-    // r9: () => void,
-    // layout: () => void,
-    // sz: () => void,
-}
+  t: number;
+  done: boolean;
+  state: string;
+  draw_order: number;
+  llerp: number;
+  pos: Vec;
+  lpos?: Vec;
+  pop: boolean;
+  tags: string[];
+  parent: Entity | null;
+  children: Entity[];
+  // r1: () => void,
+  // r2: () => void,
+  // r3: () => void,
+  // r4: () => void,
+  // r5: () => void,
+  // r6: () => void,
+  // r7: () => void,
+  // r8: () => void,
+  // r9: () => void,
+  // layout: () => void,
+  // sz: () => void,
+};
 
 function e_new() {
-    const e: Entity = {
-        t: 0,
-        done: false,
-        state: "idle",
-        draw_order: 5,
-        llerp: 0.15,
-        pos: v(0, 0),
-        pop: false,
-        tags: [],
-        parent: null,
-        children: []
-    };
-    return e;
+  const e: Entity = {
+    t: 0,
+    done: false,
+    state: "idle",
+    draw_order: 5,
+    llerp: 0.15,
+    pos: v(0, 0),
+    pop: false,
+    tags: [],
+    parent: null,
+    children: [],
+  };
+  return e;
 }
 
 function e_become(e: Entity, new_state: string) {
-    e.state = new_state;
-    e.t = 0;
+  e.state = new_state;
+  e.t = 0;
 }
 
 function e_is_a(e: Entity, tag: string) {
-    return e.tags.indexOf(tag);
+  return e.tags.indexOf(tag);
 }
-
 
 //////////////////////////////
 // entity registry
@@ -308,66 +370,78 @@ const g_entities_tagged: EntityIndex = {};
 
 // a list of properties that need an "entities_with" index
 //  Array<Extract< "r1" | "r2" | "r3" | "r4" | "r5" | "r6" | "r7" | "r8" | "r9" | "layout" | "sz", keyof Entity>>
-let indexed_properties: string[] = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "layout", "sz"];
+const indexed_properties: string[] = [
+  "r1",
+  "r2",
+  "r3",
+  "r4",
+  "r5",
+  "r6",
+  "r7",
+  "r8",
+  "r9",
+  "layout",
+  "sz",
+];
 
 // registers a new entity, making it appear in all
 // indices and update each frame
 function e_add(e: Entity) {
-    g_entities.push(e);
-    for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
-        const p = indexed_properties[p_i];
-        if (e.hasOwnProperty(p)) index_add(g_entities_with, p, e)
-    }
-    for (let t_i = 0; t_i < e.tags.length; t_i++) {
-        const t = e.tags[t_i];
-        index_add(g_entities_tagged, t, e)
-    }
-    return e
+  g_entities.push(e);
+  for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
+    const p = indexed_properties[p_i];
+    // eslint-disable-next-line no-prototype-builtins
+    if (e.hasOwnProperty(p)) index_add(g_entities_with, p, e);
+  }
+  for (let t_i = 0; t_i < e.tags.length; t_i++) {
+    const t = e.tags[t_i];
+    index_add(g_entities_tagged, t, e);
+  }
+  return e;
 }
 
 // removes an entity, effectively making it disappear
 function e_remove(e: Entity) {
-    // remove with children
-    if (e.children.length) {
-        e.children.forEach(e_remove);
+  // remove with children
+  if (e.children.length) {
+    e.children.forEach(e_remove);
+  }
+  if (e.parent) {
+    for (let i = 0; i < e.parent.children.length; i++) {
+      if (e.parent.children[i] === e) {
+        e.parent.children.splice(i, 1);
+      }
     }
-    if (e.parent) {
-        for (var i = 0; i < e.parent.children.length; i++) {
-            if (e.parent.children[i] === e) {
-                e.parent.children.splice(i, 1);
-            }
-        }
+  }
+  // unregister
+  for (let i = 0; i < g_entities.length; i++) {
+    if (e === g_entities[i]) {
+      g_entities.splice(i, 1);
+      break;
     }
-    // unregister
-    for (let i = 0; i < g_entities.length; i++) {
-        if (e === g_entities[i]) {
-            g_entities.splice(i, 1);
-            break;
-        }
-    }
+  }
 
-    for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
-        let p = indexed_properties[p_i];
-        if ((e as any)[p]) {
-            for (let i = 0; i < g_entities_with[p].length; i++) {
-                if (e === g_entities_with[p][i]) {
-                    g_entities_with[p].splice(i, 1);
-                    break;
-                }
-            }
+  for (let p_i = 0; p_i < indexed_properties.length; p_i++) {
+    const p = indexed_properties[p_i];
+    if ((e as any)[p]) {
+      for (let i = 0; i < g_entities_with[p].length; i++) {
+        if (e === g_entities_with[p][i]) {
+          g_entities_with[p].splice(i, 1);
+          break;
         }
+      }
     }
-    for (let t_i = 0; t_i < e.tags.length; t_i++) {
-        let t = e.tags[t_i];
-        for (let i = 0; i < g_entities_tagged[t].length; i++) {
-            if (e === g_entities_tagged[t][i]) {
-                g_entities_tagged[t].splice(i, 1);
-                break;
-            }
-        }
+  }
+  for (let t_i = 0; t_i < e.tags.length; t_i++) {
+    const t = e.tags[t_i];
+    for (let i = 0; i < g_entities_tagged[t].length; i++) {
+      if (e === g_entities_tagged[t][i]) {
+        g_entities_tagged[t].splice(i, 1);
+        break;
+      }
     }
+  }
 }
-
 
 //////////////////////////////
 // system:
@@ -376,21 +450,20 @@ function e_remove(e: Entity) {
 
 // updates all entities according to their state
 function e_update_all() {
-    for (let e_i = 0; e_i < g_entities.length; e_i++) {
-        const ent = g_entities[e_i];
-        // call the method with the name corresponding to this entity's current state (if it exists)
-        const fn = (ent as any)[ent.state];
-        if (fn) fn.apply(ent)
-        // removed?
-        if (ent.done) {
-            e_remove(ent);
-        } else {
-            // advance clock
-            ent.t += 1
-        }
+  for (let e_i = 0; e_i < g_entities.length; e_i++) {
+    const ent = g_entities[e_i];
+    // call the method with the name corresponding to this entity's current state (if it exists)
+    const fn = (ent as any)[ent.state];
+    if (fn) fn.apply(ent);
+    // removed?
+    if (ent.done) {
+      e_remove(ent);
+    } else {
+      // advance clock
+      ent.t += 1;
     }
+  }
 }
-
 
 //////////////////////////////
 // system:
@@ -398,34 +471,33 @@ function e_update_all() {
 //////////////////////////////
 
 function r_render_all() {
-    // render each of the rendering layers
-    for (let z = 1; z < 9; z++) {
-        const prop = `r${z}`;
-        let ordIndex: EntityIndex = {};
-        let minOrd = 127;
-        let maxOrd = 0;
-        const entities_rz = g_entities_with[prop] || [];
-        for (let ent_i = 0; ent_i < entities_rz.length; ent_i++) {
-            const ent = entities_rz[ent_i];
-            let order = ent.pos && flr(ent.pos.y) || 0;
-            if (ent.pop) order = 0;
-            index_add(ordIndex, String(order), ent);
-            if (order < minOrd) minOrd = order;
-            if (order > maxOrd) maxOrd = order;
-        }
-        for (let o = maxOrd; o >= minOrd; o--) {
-            const p = String(o);
-            if (ordIndex[p]) {
-                for (let ent_i = 0; ent_i < ordIndex[p].length; ent_i++) {
-                    let ent = ordIndex[p][ent_i];
-                    (ent as any)[prop].apply(ent); // TODO: is there a way to type? seems way harder
-                    set_palette();
-                }
-            }
-        }
+  // render each of the rendering layers
+  for (let z = 1; z < 9; z++) {
+    const prop = `r${z}`;
+    const ordIndex: EntityIndex = {};
+    let minOrd = 127;
+    let maxOrd = 0;
+    const entities_rz = g_entities_with[prop] || [];
+    for (let ent_i = 0; ent_i < entities_rz.length; ent_i++) {
+      const ent = entities_rz[ent_i];
+      let order = (ent.pos && flr(ent.pos.y)) || 0;
+      if (ent.pop) order = 0;
+      index_add(ordIndex, String(order), ent);
+      if (order < minOrd) minOrd = order;
+      if (order > maxOrd) maxOrd = order;
     }
+    for (let o = maxOrd; o >= minOrd; o--) {
+      const p = String(o);
+      if (ordIndex[p]) {
+        for (let ent_i = 0; ent_i < ordIndex[p].length; ent_i++) {
+          const ent = ordIndex[p][ent_i];
+          (ent as any)[prop].apply(ent); // TODO: is there a way to type? seems way harder
+          set_palette();
+        }
+      }
+    }
+  }
 }
-
 
 //////////////////////////////
 // system:
@@ -433,26 +505,26 @@ function r_render_all() {
 //////////////////////////////
 
 function l_do_layouts() {
-    for (let e_i = 0; e_i < g_entities_with.layout.length; e_i++) {
-        const e = g_entities_with.layout[e_i];
-        for (let c_i = 0; c_i < e.children.length; c_i++) {
-            const c = e.children[c_i];
-            (e as any).layout(c, c_i);
-        }
+  for (let e_i = 0; e_i < g_entities_with.layout.length; e_i++) {
+    const e = g_entities_with.layout[e_i];
+    for (let c_i = 0; c_i < e.children.length; c_i++) {
+      const c = e.children[c_i];
+      (e as any).layout(c, c_i);
     }
+  }
 }
 
 function l_apply(e: Entity) {
-    const lpos = e.lpos || e.pos;
-    const diff = v_sub(e.pos, lpos);
-    const diff_len_sq = v_dot(diff, diff);
-    if (diff_len_sq < 0.25) { // TODO: why do this? and why clone lpos?
-        e.pos = { ...lpos };
-    } else {
-        e.pos = v_lerp(e.pos, lpos, e.llerp);
-    }
+  const lpos = e.lpos || e.pos;
+  const diff = v_sub(e.pos, lpos);
+  const diff_len_sq = v_dot(diff, diff);
+  if (diff_len_sq < 0.25) {
+    // TODO: why do this? and why clone lpos?
+    e.pos = { ...lpos };
+  } else {
+    e.pos = v_lerp(e.pos, lpos, e.llerp);
+  }
 }
-
 
 //////////////////////////////
 // drawing from templates
@@ -469,45 +541,45 @@ function l_apply(e: Entity) {
 // // drawing shadows
 // //////////////////////////////
 
-function shadow(x1: number, y1: number, x2: number, y2: number, plt: number) {
-    if (x2 - x1 > 63) {
-        shadow(x1, y1, x1 + 63, y2, plt);
-        shadow(x1 + 64, y1, x2, y2, plt);
-        return;
-    }
-    x1 = round(x1);
-    x2 = round(x2);
-    y1 = round(y1);
-    y2 = round(y2);
-    let al = 0;
-    let ar = 0;
-    if (x1 % 2 == 1) {
-        x1 -= 1;
-        al = 1;
-    }
-    if (x2 % 2 == 0) {
-        x2 += 1;
-        ar = 1;
-    }
-    // copy to spritemem
-    local memw = (x2 - x1 + 1) / 2
-    local saddr = 0x6000 + shl(y1, 6) + x1 / 2
-    local daddr = 0x1800
-    for y = y1, y2 do
-        memcpy(daddr, saddr, memw)
-    saddr += 64
-    daddr += 64
-    end
-    // copy back to screen
-    // with shifted palette
-    set_palette(plt)
-    palt(13, false)
-    local w, h = x2 - x1 + 1 - al - ar, y2 - y1 + 1
-    sspr(al, 96, w, h, x1 + al, y1)
-    set_palette()
-}
+// function shadow(x1: number, y1: number, x2: number, y2: number, plt: number) {
+//     if (x2 - x1 > 63) {
+//         shadow(x1, y1, x1 + 63, y2, plt);
+//         shadow(x1 + 64, y1, x2, y2, plt);
+//         return;
+//     }
+//     x1 = round(x1);
+//     x2 = round(x2);
+//     y1 = round(y1);
+//     y2 = round(y2);
+//     let al = 0;
+//     let ar = 0;
+//     if (x1 % 2 == 1) {
+//         x1 -= 1;
+//         al = 1;
+//     }
+//     if (x2 % 2 == 0) {
+//         x2 += 1;
+//         ar = 1;
+//     }
+//     // copy to spritemem
+//     local memw = (x2 - x1 + 1) / 2
+//     local saddr = 0x6000 + shl(y1, 6) + x1 / 2
+//     local daddr = 0x1800
+//     for y = y1, y2 do
+//         memcpy(daddr, saddr, memw)
+//     saddr += 64
+//     daddr += 64
+//     end
+//     // copy back to screen
+//     // with shifted palette
+//     set_palette(plt)
+//     palt(13, false)
+//     local w, h = x2 - x1 + 1 - al - ar, y2 - y1 + 1
+//     sspr(al, 96, w, h, x1 + al, y1)
+//     set_palette()
+// }
 
-obfn.sh = shadow
+// obfn.sh = shadow
 
 //////////////////////////////
 //////////////////////////////
@@ -536,30 +608,30 @@ obfn.sh = shadow
 //////////////////////////////
 
 function background() {
-    const bg: Entity & { r1: () => void } = {
-        ...e_new(),
-        r1: background_r1
-    };
-    return bg;
+  const bg: Entity & { r1: () => void } = {
+    ...e_new(),
+    r1: background_r1,
+  };
+  return bg;
 }
 
 function background_r1() {
-    // map part
+  // map part
+  palt(13, false);
+  map(0, 0, -4, -5, 17, 17);
+  // "3d" hanging cloth
+  for (let y = 0; y <= 8; y++) {
+    set_palette((y + 8) / 4);
     palt(13, false);
-    map(0, 0, -4, -5, 17, 17);
-    // "3d" hanging cloth
-    for (let y = 0; y <= 8; y++) {
-        set_palette((y + 8) / 4)
-        palt(13, false)
-        // TODO:
-        // sspr(0, 88 + y * 2 % 8, 104, 1,
-        //     12 + y, 99 + y, 104 - y * 2, 1);
-    }
-    rectfill(21, 108, 106, 108, 0);
-    // table legs
-    set_palette();
-    spr(100, 28, 109, 2, 1);
-    spr(116, 82, 109, 2, 1);
+    // TODO:
+    // sspr(0, 88 + y * 2 % 8, 104, 1,
+    //     12 + y, 99 + y, 104 - y * 2, 1);
+  }
+  rectfill(21, 108, 106, 108, 0);
+  // table legs
+  set_palette();
+  spr(100, 28, 109, 2, 1);
+  spr(116, 82, 109, 2, 1);
 }
 
 //////////////////////////////
@@ -567,73 +639,73 @@ function background_r1() {
 //////////////////////////////
 
 type Pointer = Entity & {
-    script: any,
-    delay: number,
-    mode: "keys" | "mouse" | "script",
-    pmode: "keys" | "mouse" | "script",
-    idle: () => void,
-    choose: (os: any, interaction: string, cancellable?: boolean) => void,
-}
+  script: any;
+  delay: number;
+  mode: "keys" | "mouse" | "script";
+  pmode: "keys" | "mouse" | "script";
+  idle: () => void;
+  choose: (os: any, interaction: string, cancellable?: boolean) => void;
+};
 function pointer() {
-    const pointer: Pointer = {
-        ...e_new(),
-        pos: v(64, 64),
-        script: {},
-        delay: 15,
-        mode: "keys",
-        pmode: "keys",
-        idle: pointer_idle,
-        choose: pointer_choose
-    };
-    return pointer;
+  const pointer: Pointer = {
+    ...e_new(),
+    pos: v(64, 64),
+    script: {},
+    delay: 15,
+    mode: "keys",
+    pmode: "keys",
+    idle: pointer_idle,
+    choose: pointer_choose,
+  };
+  return pointer;
 }
 
 // TODO: add this: Pointer
 function pointer_idle() {
-    if (this.script) {
-        if (g_inp.mmove) {
-            this.mode = "mouse";
-            this.pos = g_inp.mpos;
-            this.lpos = g_inp.mpos;
-        }
-        for (let b = 0; b <= 5; b++) {
-            if (g_inp["b" + b + "press"]) {
-                this.mode = "keys";
-            }
-        }
-    } else if (this.mode !== "script") {
-        this.pmode = this.mode;
-        this.mode = "script";
+  if (this.script) {
+    if (g_inp.mmove) {
+      this.mode = "mouse";
+      this.pos = g_inp.mpos;
+      this.lpos = g_inp.mpos;
     }
-    const mode = this.mode;
-    if (this.options) {
-        // who controls?
-        if (mode === "script") {
-            this.script_control();
-        } else if (mode === "mouse") {
-            this.mouse_control();
-        } else if (mode === "keys") {
-            this.key_control();
-        }
-        // lerp
-        l_apply(this);
+    for (let b = 0; b <= 5; b++) {
+      if (g_inp["b" + b + "press"]) {
+        this.mode = "keys";
+      }
     }
+  } else if (this.mode !== "script") {
+    this.pmode = this.mode;
+    this.mode = "script";
+  }
+  const mode = this.mode;
+  if (this.options) {
+    // who controls?
+    if (mode === "script") {
+      this.script_control();
+    } else if (mode === "mouse") {
+      this.mouse_control();
+    } else if (mode === "keys") {
+      this.key_control();
+    }
+    // lerp
+    l_apply(this);
+  }
 }
 
 function pointer_script_control() {
-    if (this.prompt) {
-        this.delay = 25
-        if (g_inp.proceed) {
-            this.prompt.dismiss();
-            this.prompt = null;
-        }
+  if (this.prompt) {
+    this.delay = 25;
+    if (g_inp.proceed) {
+      this.prompt.dismiss();
+      this.prompt = null;
     }
-    if (this.delay > 0) {
-        this.delay -= 1
-    } else {
-        let op = this.s_pop();
-        if (op) this.s_op(op);
-    }
+  }
+  if (this.delay > 0) {
+    this.delay -= 1;
+  } else {
+    const op = this.s_pop();
+    if (op) this.s_op(op);
+  }
 }
 
 //  function pointer_key_control()
@@ -687,15 +759,17 @@ function pointer_script_control() {
 //   self:select()
 //  end
 
-function pointer_choose(os: any, interaction: string, cancellable: boolean = false) {
-    this.options = os;
-    this.interaction = interaction;
-    this.cancellable = cancellable;
-    if (this.mode != "mouse") {
-        const tgt = min_by(os, (o) => v_lensq(v_sub(v_mul(this.pos, 0.01), v_mul(o.pos, 0.01))))
-        this.select(tgt)
-        this.snap()
-    }
+function pointer_choose(os: any, interaction: string, cancellable = false) {
+  this.options = os;
+  this.interaction = interaction;
+  this.cancellable = cancellable;
+  if (this.mode != "mouse") {
+    const tgt = min_by(os, (o) =>
+      v_lensq(v_sub(v_mul(this.pos, 0.01), v_mul(o.pos, 0.01)))
+    );
+    this.select(tgt);
+    this.snap();
+  }
 }
 
 //  function pointer_move(d)
@@ -811,73 +885,72 @@ function pointer_choose(os: any, interaction: string, cancellable: boolean = fal
 //////////////////////////////
 
 type Particle = {
-    p: { x: number, y: number },
-    v: { x: number, y: number },
-    drag: number,
-    l: number,
-    d: number,
-    grav: number,
+  p: { x: number; y: number };
+  v: { x: number; y: number };
+  drag: number;
+  l: number;
+  d: number;
+  grav: number;
 };
 function particle_new() {
-    const particle: Particle = {
-        p: { x: 0, y: 0 },
-        v: { x: 0, y: 0 },
-        drag: 1,
-        l: 1,
-        d: 0.016666,
-        grav: 0,
-    };
-    return particle;
+  const particle: Particle = {
+    p: { x: 0, y: 0 },
+    v: { x: 0, y: 0 },
+    drag: 1,
+    l: 1,
+    d: 0.016666,
+    grav: 0,
+  };
+  return particle;
 }
 
 function particles() {
-    const particles: Entity & {
-        ps: Record<string, Particle>,
-        idle: () => void,
-        spawn: (p: Particle) => void,
-        r8: () => void,
-    } = {
-        ...e_new(),
-        ps: {},
-        idle: particles_idle,
-        spawn: particles_spawn,
-        r8: particles_r8,
-    };
-    return particles;
+  const particles: Entity & {
+    ps: Record<string, Particle>;
+    idle: () => void;
+    spawn: (p: Particle) => void;
+    r8: () => void;
+  } = {
+    ...e_new(),
+    ps: {},
+    idle: particles_idle,
+    spawn: particles_spawn,
+    r8: particles_r8,
+  };
+  return particles;
 }
 
 function particles_idle() {
-    for (const key in this.ps) {
-        const p = this.ps[key];
-        p.p.x += p.v.x;
-        p.p.y += p.v.y;
-        p.v.x *= p.drag;
-        p.v.y *= p.drag;
-        p.v.y += p.grav;
-        p.l -= p.d;
-        if (p.l <= 0) delete this.ps[key];
-    }
+  for (const key in this.ps) {
+    const p = this.ps[key];
+    p.p.x += p.v.x;
+    p.p.y += p.v.y;
+    p.v.x *= p.drag;
+    p.v.y *= p.drag;
+    p.v.y += p.grav;
+    p.l -= p.d;
+    if (p.l <= 0) delete this.ps[key];
+  }
 }
 
 function particles_spawn(p: Particle) {
-    this.ps[rnd()] = p;
+  this.ps[rnd()] = p;
 }
 
 function particles_r8() {
-    for (let key in this.ps) {
-        const p = this.ps[key];
-        let pos = p.p;
-        if (p.radius) {
-            // TODO:
-            // circfill(pos.x, pos.y, p.radius * p.l, p.clr)
-        }
-        if (p.sradius) {
-            let s = 1 - abs(p.l - 0.5) * 2
-            // circfill(pos.x, pos.y, p.sradius * s, p.clr)
-        }
+  for (const key in this.ps) {
+    const p = this.ps[key];
+    const pos = p.p;
+    if (p.radius) {
+      // TODO:
+      // circfill(pos.x, pos.y, p.radius * p.l, p.clr)
     }
+    if (p.sradius) {
+      const s = 1 - abs(p.l - 0.5) * 2;
+      // circfill(pos.x, pos.y, p.sradius * s, p.clr)
+    }
+  }
 }
-
 
 // floater=entity:extend[[
 // ]]
@@ -1073,89 +1146,82 @@ function particles_r8() {
 //////////////////////////////
 
 type Animation = Entity & {
-    dur: number,
-    at: number,
-    locked: boolean,
-    done: boolean,
-    elems: any[],
-    idle: () => void,
-    dismiss: () => void,
-    r8: () => void,
-}
+  dur: number;
+  at: number;
+  locked: boolean;
+  done: boolean;
+  elems: any[];
+  idle: () => void;
+  dismiss: () => void;
+  r8: () => void;
+};
 function animation() {
-    const animation: Animation = {
-        ...e_new(),
-        dur: 60,
-        at: 0,
-        locked: false,
-        done: false,
-        elems: [],
-        idle: animation_idle,
-        dismiss: animation_dismiss,
-        r8: animation_r8,
-    }
-    return animation;
+  const animation: Animation = {
+    ...e_new(),
+    dur: 60,
+    at: 0,
+    locked: false,
+    done: false,
+    elems: [],
+    idle: animation_idle,
+    dismiss: animation_dismiss,
+    r8: animation_r8,
+  };
+  return animation;
 }
 function animation_idle(this: Animation) {
-    this.at += 1
-    if (this.locked && this.at > this.dur) {
-        this.at = this.dur
-    }
-    this.done = this.at > this.dur * 2.5
+  this.at += 1;
+  if (this.locked && this.at > this.dur) {
+    this.at = this.dur;
+  }
+  this.done = this.at > this.dur * 2.5;
 }
 
 function animation_dismiss(this: Animation) {
-    this.locked = false
+  this.locked = false;
 }
 
 function animation_r8(this: Animation) {
-    let t = 1 - this.at / this.dur;
-    t = t ^ 5;
-    for (const e of this.elems) {
-        let dt = t * 128;
-        if (e.sym) {
-            dt = abs(dt);
-        }
-        (animation_functions as any)[e.fn](e.d * dt, e);
+  let t = 1 - this.at / this.dur;
+  t = t ^ 5;
+  for (const e of this.elems) {
+    let dt = t * 128;
+    if (e.sym) {
+      dt = abs(dt);
     }
+    (animation_functions as any)[e.fn](e.d * dt, e);
+  }
 }
 
 const animation_functions = {
-    sh(d: any, o: any) {
-        const p = o.p + d;
-        const c = p + o.s;
-        p.x = max(round(p.x), 0);
-        p.y = max(round(p.y), 0);
-        c.x = min(round(c.x), 127);
-        c.y = min(round(c.y), 127);
-        if (p.x !== c.x && p.y !== c.y) {
-            shadow(p.x, p.y, c.x, c.y, o.plt);
-        }
-    },
-    prcd(d: any, o: any) {
-        o.sp = g_chooser.pmode == "mouse" && 41 || 25
-        animation_functions.dspr(d, o);
-    },
-    dspr(d: any, o: any) {
-        if (o.blink && g_t % (o.blink * 2) < o.blink) return;
-        spr(o.sp, o.p.x + d.x, o.p.y + d.y, o.s.x, o.s.y);
-    },
-    pdsh(d: any, o: any) {
-        printdsh(o.t, o.p.x + d.x, o.p.y + d.y, o.c1, o.c2, o.a);
-    },
-    bar(d: any, o: any) {
-        const p = o.p + d;
-        const c = p + o.s;
-        rectfill(p.x, p.y, c.x, c.y, o.c);
+  sh(d: any, o: any) {
+    const p = o.p + d;
+    const c = p + o.s;
+    p.x = max(round(p.x), 0);
+    p.y = max(round(p.y), 0);
+    c.x = min(round(c.x), 127);
+    c.y = min(round(c.y), 127);
+    if (p.x !== c.x && p.y !== c.y) {
+      // shadow(p.x, p.y, c.x, c.y, o.plt);
     }
-}
-
-
-
-
-
-
-
+  },
+  prcd(d: any, o: any) {
+    o.sp = (g_chooser.pmode == "mouse" && 41) || 25;
+    animation_functions.dspr(d, o);
+  },
+  dspr(d: any, o: any) {
+    if (o.blink && g_t % (o.blink * 2) < o.blink) return;
+    spr(o.sp, o.p.x + d.x, o.p.y + d.y, o.s.x, o.s.y);
+  },
+  pdsh(d: any, o: any) {
+    printdsh(o.t, o.p.x + d.x, o.p.y + d.y, o.c1, o.c2, o.a);
+  },
+  bar(d: any, o: any) {
+    const p = o.p + d;
+    const c = p + o.s;
+    rectfill(p.x, p.y, c.x, c.y, o.c);
+  },
+};
 
 // //////////////////////////////
 // // actual animations
@@ -1406,7 +1472,6 @@ const animation_functions = {
 //   palt(13,false)
 //   map(self.mx,self.my,p.x-8,p.y-8,11,9)
 //  end
-
 
 // slot=entity:extend[[
 //  tags=o("slot"),
@@ -1849,17 +1914,17 @@ const animation_functions = {
 // //////////////////////////////
 
 function logo() {
-    const logo = animation();
-    logo.dur = 45;
-    logo.elems = [
-        { fn: "sh", d: v(0, -1), p: v(0, 18), s: v(127, 2), plt: 2, },
-        { fn: "sh", d: v(0, -1), p: v(0, 20), s: v(127, 22), plt: 3, },
-        { fn: "bar", d: v(0, -1), p: v(0, 18), s: v(127, 2), c: 0, },
-        { fn: "bar", d: v(0, -1), p: v(0, 43), s: v(127, 2), c: 0, },
-        { fn: "dspr", d: v(0, 1), p: v(44, 17), s: v(5, 4), spr: 10, },
-    ];
-    logo.locked = true;
-    return logo
+  const logo = animation();
+  logo.dur = 45;
+  logo.elems = [
+    { fn: "sh", d: v(0, -1), p: v(0, 18), s: v(127, 2), plt: 2 },
+    { fn: "sh", d: v(0, -1), p: v(0, 20), s: v(127, 22), plt: 3 },
+    { fn: "bar", d: v(0, -1), p: v(0, 18), s: v(127, 2), c: 0 },
+    { fn: "bar", d: v(0, -1), p: v(0, 43), s: v(127, 2), c: 0 },
+    { fn: "dspr", d: v(0, 1), p: v(44, 17), s: v(5, 4), spr: 10 },
+  ];
+  logo.locked = true;
+  return logo;
 }
 
 // blinker=entity:extend[[
@@ -1874,71 +1939,71 @@ function logo() {
 //  end
 
 function menu_text() {
-    const menu_text: Entity & {
-        r8: () => void
-    } = {
-        ...e_new(),
-        r8: menu_text_r8
-    }
-    return menu_text;
+  const menu_text: Entity & {
+    r8: () => void;
+  } = {
+    ...e_new(),
+    r8: menu_text_r8,
+  };
+  return menu_text;
 }
 function menu_text_r8() {
-    if (Number(dget(0)) > 0) {
-        printdsh("best score: " + dget(0), 64, 111, 7, 13, 0.5)
-        printdsh("best cake: " + dget(1), 64, 119, 7, 13, 0.5)
-    } else {
-        printdsh("controls:", 64, 99, 15, 4, 0.5)
-        printdsh("use mouse/touch to drag", 64, 109, 6, 5, 0.5)
-        printdsh("or arrows+[z]/[x] on keyboard", 64, 117, 6, 5, 0.5)
-    }
+  if (Number(dget(0)) > 0) {
+    printdsh("best score: " + dget(0), 64, 111, 7, 13, 0.5);
+    printdsh("best cake: " + dget(1), 64, 119, 7, 13, 0.5);
+  } else {
+    printdsh("controls:", 64, 99, 15, 4, 0.5);
+    printdsh("use mouse/touch to drag", 64, 109, 6, 5, 0.5);
+    printdsh("or arrows+[z]/[x] on keyboard", 64, 117, 6, 5, 0.5);
+  }
 }
 
-function menu_op(pos: Vec, text: String) {
-    const menu_op: Entity & {
-        text: String,
-        sz: Vec,
-        pointer_off: Vec,
-        r8: () => void
-    } = {
-        ...e_new(),
-        text,
-        pos,
-        sz: v(80, 10),
-        pointer_off: v(21, 0),
-        r8: menu_op_r8
-    }
-    return menu_op
+function menu_op(pos: Vec, text: string) {
+  const menu_op: Entity & {
+    text: string;
+    sz: Vec;
+    pointer_off: Vec;
+    r8: () => void;
+  } = {
+    ...e_new(),
+    text,
+    pos,
+    sz: v(80, 10),
+    pointer_off: v(21, 0),
+    r8: menu_op_r8,
+  };
+  return menu_op;
 }
 function menu_op_r8() {
-    const sh = this.selected && 3 || 2;
-    const p = this.pos;
-    //   shadow(p.x,p.y-1,p.x+71,p.y+8,sh); TODO:
-    printdsh(this.text, p.x + 36, p.y + 1, 10, 4, 0.5);
+  const sh = (this.selected && 3) || 2;
+  const p = this.pos;
+  //   shadow(p.x,p.y-1,p.x+71,p.y+8,sh); TODO:
+  printdsh(this.text, p.x + 36, p.y + 1, 10, 4, 0.5);
 }
 
 function* main_menu() {
-    while (true) {
-        console.log("test")
-        // show the menu
-        const s = menu_op(v(28, 61), "start game");
-        const htp = menu_op(v(28, 74), "how to play");
-        const menu_entities = [logo(), menu_text(), s, htp];
-        menu_entities.forEach(e_add);
-        // g_chooser.pos = v(64, 40);
-        // g_runner.choose({ s, htp }, "click");
-        // const choice = yield;
-        // g_tutorial = choice == htp
-        // menu_entities.forEach(e_remove);
-        // // play the game
-        // co_init_game();
-        // if (g_tutorial) {
-        //     co_init_tutorial();
-        // }
-        // game_logic(g_runner);
-        // co_end_game();
-        g_runner.delay(75);
-        yield;
-    }
+  while (true) {
+    console.log("test");
+    // show the menu
+    const s = menu_op(v(28, 61), "start game");
+    const htp = menu_op(v(28, 74), "how to play");
+    const menu_entities = [logo(), menu_text(), s, htp];
+    menu_entities.forEach(e_add);
+    // g_chooser.pos = v(64, 40);
+    // g_runner.choose({ s, htp }, "click");
+    // const choice = yield;
+    // g_tutorial = choice == htp
+    // menu_entities.forEach(e_remove);
+    // // play the game
+    // co_init_game();
+    // if (g_tutorial) {
+    //     co_init_tutorial();
+    // }
+    // game_logic(g_runner);
+    // co_end_game();
+    g_runner.delay(75);
+    yield;
+  }
 }
 
 // //////////////////////////////
@@ -2089,74 +2154,73 @@ function* main_menu() {
 //////////////////////////////
 
 function runner() {
-    const runner = {
-        blocked: false,
-        start: runner_start,
-        process: runner_process,
-        unblock: runner_unblock,
-        delay: runner_delay,
-        waitforbtn: runner_waitforbtn,
-        choose: runner_choose
-    }
-    return runner;
+  const runner = {
+    blocked: false,
+    start: runner_start,
+    process: runner_process,
+    unblock: runner_unblock,
+    delay: runner_delay,
+    waitforbtn: runner_waitforbtn,
+    choose: runner_choose,
+  };
+  return runner;
 }
 function runner_start(logic: () => void) {
-    this.co = logic()
+  this.co = logic();
 }
 
 function runner_process() {
-    if (!this.blocked) {
-        this.co.next(this.value)
-        this.value = true
-    }
+  if (!this.blocked) {
+    this.co.next(this.value);
+    this.value = true;
+  }
 }
 
 function runner_unblock(value: any = null) {
-    this.value = value;
-    this.blocked = false;
+  this.value = value;
+  this.blocked = false;
 }
 
 function runner_delay(dur: number) {
-    function delay() {
-        const delay: Entity & {
-            idle: () => void
-        } = {
-            ...e_new(),
-            idle: function delay_idle() {
-                this.done = this.t >= dur
-                if (this.done) g_runner.unblock();
-            }
-        }
-        return delay;
-    }
-    this.blocked = true;
-    e_add(delay());
+  function delay() {
+    const delay: Entity & {
+      idle: () => void;
+    } = {
+      ...e_new(),
+      idle: function delay_idle() {
+        this.done = this.t >= dur;
+        if (this.done) g_runner.unblock();
+      },
+    };
+    return delay;
+  }
+  this.blocked = true;
+  e_add(delay());
 }
 
 function runner_waitforbtn() {
-    function waitforbtn() {
-        const delay: Entity & {
-            idle: () => void
-        } = {
-            ...e_new(),
-            idle: function waitforbtn_idle() {
-                if (g_inp.proceed) {
-                    this.done = true;
-                    g_runner.unblock();
-                }
-            }
+  function waitforbtn() {
+    const delay: Entity & {
+      idle: () => void;
+    } = {
+      ...e_new(),
+      idle: function waitforbtn_idle() {
+        if (g_inp.proceed) {
+          this.done = true;
+          g_runner.unblock();
         }
-        return delay;
-    }
-    this.blocked = true
-    e_add(waitforbtn());
+      },
+    };
+    return delay;
+  }
+  this.blocked = true;
+  e_add(waitforbtn());
 }
 
 function runner_choose(os: any, interaction: string, cancellable?: boolean) {
-    this.blocked = true;
-    g_chooser.choose(os, interaction, cancellable);
+  this.blocked = true;
+  g_chooser.choose(os, interaction, cancellable);
 }
-
 
 // //////////////////////////////
 // // tutorial
@@ -2311,14 +2375,14 @@ const g_runner = runner();
 g_runner.start(main_menu);
 start("poc", 9, 2, update, draw, 60);
 function update() {
-    g_t += 1;
-    // l_do_layouts();
-    // i_update_input();
-    e_update_all();
-    g_runner.process();
+  g_t += 1;
+  // l_do_layouts();
+  // i_update_input();
+  e_update_all();
+  g_runner.process();
 }
 
 function draw() {
-    cls();
-    r_render_all();
+  cls();
+  r_render_all();
 }
