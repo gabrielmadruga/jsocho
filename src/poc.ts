@@ -243,7 +243,7 @@ function randomizer_next(exclude: number): number {
   if (this.forced) {
     return this.forced.shift();
   }
-  while (true) {
+  for (;;) {
     const i = rnd(this.es.length);
     const prob = this.ctr - this.last[i];
     if (rnd() < prob) {
@@ -261,12 +261,17 @@ function randomizer_force(values: number[]) {
   this.forced = values;
 }
 
-// TODO:
-// function force(randomizer: Randomizer, random_map) {
-//  for k,f in pairs(random_map) {
-//   obj[k.."rnd"]:force(f)
-//  }
-// }
+function force(
+  obj: Record<string, unknown>,
+  random_map: Record<string, unknown>
+) {
+  for (const key in random_map) {
+    force(
+      obj[`${key}rnd`] as Record<string, unknown>,
+      random_map[key] as Record<string, unknown>
+    );
+  }
+}
 
 //////////////////////////////
 // palettes
@@ -1189,7 +1194,7 @@ function animation_r8(this: Animation) {
     if (e.sym) {
       dt = abs(dt);
     }
-    (animation_functions as any)[e.fn](e.d * dt, e);
+    // (animation_functions as any)[e.fn](e.d * dt, e);
   }
 }
 
@@ -1836,82 +1841,81 @@ const animation_functions = {
 //  return ps
 // end
 
-// //////////////////////////////
-// // hand
-// //////////////////////////////
+//////////////////////////////
+// hand
+//////////////////////////////
 
-// hand=entity:extend[[
-//  rnds=o(
-//   k=o(range=o(0,5)),
-//   ld=o(range=o(1,4),looseness=0.5),
-//   lk=o(range=o(0,5)),
-//   v=o(es=o(1,2,2,3)),
-//  ),
-// ]]
-//  function hand:init()
-//   self.children={}
-//   for k,v in pairs(self.rnds) do
-//    self[k.."rnd"]=
-//     randomizer(v)
-//   end
-//  end
-//  function hand:co_deal_new(force_recipe)
-//   // possible?
-//   local ch=self.children
-//   if (#ch>=5) return
-//   // forced draw?
-//   local k
-//   local forced=
-//    force_recipe and
-//    #ch==4 and
-//    #filter(ch,
-//     function(c)
-//      return c.kind==g_recipe.kind
-//     end)==0
-//   if forced then
-//     k=g_recipe.kind
-//   end
-//   // random kind
-//   if not k then
-//    k=self.krnd:next()
-//   end
-//   // make the card
-//   local c=card({
-//    pos=v(144,140),
-//    lpos=v(144,140),
-//    kind=k,
-//    score=self.vrnd:next(),
-//    links={}
-//   })
-//   // make links
-//   local link_count=1
-//   for l=1,link_count do
-//    local link_k,link_d
-//    repeat
-//     link_k=
-//      self.lkrnd:next(k)
-//     link_d=
-//      self.ldrnd:next()
-//    until not c.links[link_d]
-//    c.links[link_d]={direction=link_d,kind=link_k}
-//   end
-//   // move
-//   move(c,self)
-//   sfx(1)
-//   // animation
-//   g_runner.delay(8)
-//   yield()
-//  end
+type Hand = Entity & {
+  rands: {
+    k: { range: [0, 5] };
+    ld: { range: [1, 4]; looseness: 0.5 };
+    lk: { range: [0, 5] };
+    v: { es: [1, 2, 2, 3] };
+  };
+};
 
-//  function hand:layout(child,i)
-//   local n=#self.children
-//   local x=64+(i-1-n/2)*25
-//   child.lpos=v(x,101-(child.selected and 4 or 0))
-//  end
+function hand_new() {}
 
-// //////////////////////////////
-// // menu stuff
-// //////////////////////////////
+function hand_init() {
+  this.children = [];
+  for (let key in this.rnds) {
+    const value = this.rnds[key];
+    this[`${key}rnd`] = randomizer(value);
+  }
+}
+
+function* hand_co_deal_new(force_recipe: boolean) {
+  // possible?
+  const ch = this.children;
+  if (ch.length >= 5) return;
+  // forced draw?
+  const forced =
+    force_recipe &&
+    ch.length == 4 &&
+    ch.filter((c) => c.kind === g_recipe.kind).length === 0;
+  let k;
+  if (forced) {
+    k = g_recipe.kind;
+  }
+  // random kind
+  if (!k) {
+    k = this.krnd.next();
+  }
+  // make the card
+  const c = card_new({
+    pos: v(144, 140),
+    lpos: v(144, 140),
+    kind: k,
+    score: this.vrnd.next(),
+    links: {},
+  });
+  // make links
+  const link_count = 1;
+  for (let l = 0; l < link_count; l++) {
+    let link_k, link_d;
+    do {
+      link_k = this.lkrnd.next(k);
+      link_d = this.ldrnd.next();
+    } while (c.links[link_d]);
+    c.links[link_d] = { direction: link_d, kind: link_k };
+  }
+  // move
+  move(c, self);
+  sfx(1);
+  // animation
+  g_runner.delay(8);
+  yield;
+}
+
+function hand_layout(child, i) {
+  const n = this.children.length;
+  const x = 64 + (i - 1 - n / 2) * 25;
+  child.lpos = v(x, 101 - ((child.selected && 4) || 0));
+}
+
+//////////////////////////////
+// menu stuff
+//////////////////////////////
 
 function logo() {
   const logo = animation();
@@ -1926,17 +1930,6 @@ function logo() {
   logo.locked = true;
   return logo;
 }
-
-// blinker=entity:extend[[
-// ]]
-//  function blinker:r8(p)
-//   if (self.t<60) return
-//   local t=(self.t-60)%90
-//   if t<=45 then
-//    printdsh(self.text,p.x,p.y,10,4,0.5)
-//   end
-//   if (t==0) sfx(2)
-//  end
 
 function menu_text() {
   const menu_text: Entity & {
@@ -1958,13 +1951,14 @@ function menu_text_r8() {
   }
 }
 
+type MenuOp = Entity & {
+  text: string;
+  sz: Vec;
+  pointer_off: Vec;
+  r8: () => void;
+};
 function menu_op(pos: Vec, text: string) {
-  const menu_op: Entity & {
-    text: string;
-    sz: Vec;
-    pointer_off: Vec;
-    r8: () => void;
-  } = {
+  const menu_op: MenuOp = {
     ...e_new(),
     text,
     pos,
@@ -1981,52 +1975,66 @@ function menu_op_r8() {
   printdsh(this.text, p.x + 36, p.y + 1, 10, 4, 0.5);
 }
 
-function* main_menu() {
-  while (true) {
+let g_tutorial = false;
+function* main_menu(): Generator<void, void, MenuOp> {
+  for (;;) {
     console.log("test");
     // show the menu
     const s = menu_op(v(28, 61), "start game");
     const htp = menu_op(v(28, 74), "how to play");
     const menu_entities = [logo(), menu_text(), s, htp];
     menu_entities.forEach(e_add);
-    // g_chooser.pos = v(64, 40);
-    // g_runner.choose({ s, htp }, "click");
-    // const choice = yield;
-    // g_tutorial = choice == htp
-    // menu_entities.forEach(e_remove);
-    // // play the game
-    // co_init_game();
-    // if (g_tutorial) {
-    //     co_init_tutorial();
-    // }
-    // game_logic(g_runner);
-    // co_end_game();
+    g_chooser.pos = v(64, 40);
+    g_runner.choose({ s, htp }, "click");
+    const choice = yield;
+    g_tutorial = choice === htp;
+    menu_entities.forEach(e_remove);
+    // play the game
+    co_init_game();
+    if (g_tutorial) {
+      co_init_tutorial();
+    }
+    game_logic(g_runner);
+    co_end_game();
     g_runner.delay(75);
     yield;
   }
 }
 
-// //////////////////////////////
-// // game
-// //////////////////////////////
+//////////////////////////////
+// game
+//////////////////////////////
 
-// game=entity:extend[[
-//  score=0,best_cake=0,
-// ]]
-//  function game:score_cake(pts)
-//   self.best_cake=max(pts,self.best_cake)
-//   if pts>dget(1) and not g_tutorial then
-//    dset(1,pts)
-//   end
-//   self.score+=pts
-//  end
+type Game = Entity & {
+  score: number;
+  best_cake: number;
+  score_cake: (this: Game, pts: number) => void;
+  r8: (this: Game) => void;
+};
+function game_new(): Game {
+  return {
+    ...e_new(),
+    score: 0,
+    best_cake: 0,
+    score_cake: game_score_cake,
+    r8: game_r8,
+  };
+}
 
-//  function game:r8()
-//   local w=#tostr(self.score)*4
-//   cutebox(99-w,0,127,7,1,5,0)
-//   printdsh(self.score,126,1,7,5,1)
-//   printdsh("score:",126-w,1,13,1,1)
-//  end
+function game_score_cake(this: Game, pts: number) {
+  this.best_cake = max(pts, this.best_cake);
+  if (pts > Number(dget(1)) && !g_tutorial) {
+    dset(1, String(pts));
+  }
+  this.score += pts;
+}
+
+function game_r8(this: Game) {
+  const w = String(this.score).length * 4;
+  cutebox(99 - w, 0, 127, 7, 1, 5, 0);
+  printdsh(String(this.score), 126, 1, 7, 5, 1);
+  printdsh("score:", 126 - w, 1, 13, 1, 1);
+}
 
 // //////////////////////////////
 // // game logic
@@ -2222,148 +2230,186 @@ function runner_choose(os: any, interaction: string, cancellable?: boolean) {
   g_chooser.choose(os, interaction, cancellable);
 }
 
-// //////////////////////////////
-// // tutorial
-// //////////////////////////////
+//////////////////////////////
+// tutorial
+//////////////////////////////
 
-// tutorial=//[[prot]]ob[[
-//  cards=o(
-//   k=o(0,0,1,3,4,5),
-//   ld=o(1,2,3,4,1,3),
-//   lk=o(1,3,3,2,2,0),
-//  ),
-//  recipes=o(
-//   k=o(0),
-//   tt=o(1),
-//  ),
-//  script=o(
-//   "prompt",2,
-//   "you're baking cakes",
-//   "for the holidays!",
-//   "prompt",2,
-//   "you do this by putting",
-//   "ingredients into the tray.",
-//   "move",2,
-//   "move",2,
-//   "confirm",
-//   "move",1,
-//   "move",1,
-//   "move",3,
-//   "move",2,
-//   "move",4,
-//   "move",2,
-//   "confirm",
-//   "prompt",2,
-//   "you have to match the recipe",
-//   "in the top-left corner.",
-//   "prompt",3,
-//   "this one means that the total",
-//   "score on chocolate tiles used",
-//   "in your cake must be 1 or more.",
-//   "move",1,
-//   "move",1,
-//   "move",1,
-//   "confirm",
-//   "confirm",
-//   "prompt",2,
-//   "the recipe will fall away",
-//   "when it's finished.",
-//   "prompt",3,
-//   "if you place two identical",
-//   "tiles next to each other/",
-//   "they will fuse.",
-//   "move",1,
-//   "confirm",
-//   "move",3,
-//   "move",1,
-//   "move",2,
-//   "move",4,
-//   "confirm",
-//   "prompt",2,
-//   "tiles with different symbols",
-//   "interact through links.",
-//   "prompt",2,
-//   "see these colored knobs",
-//   "on the sides of your tiles?",
-//   "prompt",3,
-//   "a red knob on the left means",
-//   "you can link to a red tile",
-//   "through that side.",
-//   "move",1,
-//   "confirm",
-//   "wait",
-//   "confirm",
-//   "prompt",2,
-//   "this swaps the tiles and",
-//   "adds bonus points to both.",
-//   "prompt",2,
-//   "forming longer combos adds",
-//   "points to all your tiles.",
-//   "confirm",
-//   "move",1,
-//   "move",2,
-//   "wait",
-//   "confirm",
-//   "prompt",3,
-//   "once the tray fills up/",
-//   "the cake is scored",
-//   "and a new recipe appears.",
-//   "move",1,
-//   "move",1,
-//   "confirm",
-//   "confirm",
-//   "prompt",2,
-//   "you're on your own now!",
-//   "good luck!",
-//   "reset",
-//  ),
-// ]]//[[protend]]
+const tutorial = {
+  cards: {
+    k: [0, 0, 1, 3, 4, 5],
+    ld: [1, 2, 3, 4, 1, 3],
+    lk: [1, 3, 3, 2, 2, 0],
+  },
+  recipes: {
+    k: 0,
+    tt: 1,
+  },
+  script: [
+    "prompt",
+    2,
+    "you're baking cakes",
+    "for the holidays!",
+    "prompt",
+    2,
+    "you do this by putting",
+    "ingredients into the tray.",
+    "move",
+    2,
+    "move",
+    2,
+    "confirm",
+    "move",
+    1,
+    "move",
+    1,
+    "move",
+    3,
+    "move",
+    2,
+    "move",
+    4,
+    "move",
+    2,
+    "confirm",
+    "prompt",
+    2,
+    "you have to match the recipe",
+    "in the top-left corner.",
+    "prompt",
+    3,
+    "this one means that the total",
+    "score on chocolate tiles used",
+    "in your cake must be 1 or more.",
+    "move",
+    1,
+    "move",
+    1,
+    "move",
+    1,
+    "confirm",
+    "confirm",
+    "prompt",
+    2,
+    "the recipe will fall away",
+    "when it's finished.",
+    "prompt",
+    3,
+    "if you place two identical",
+    "tiles next to each other/",
+    "they will fuse.",
+    "move",
+    1,
+    "confirm",
+    "move",
+    3,
+    "move",
+    1,
+    "move",
+    2,
+    "move",
+    4,
+    "confirm",
+    "prompt",
+    2,
+    "tiles with different symbols",
+    "interact through links.",
+    "prompt",
+    2,
+    "see these colored knobs",
+    "on the sides of your tiles?",
+    "prompt",
+    3,
+    "a red knob on the left means",
+    "you can link to a red tile",
+    "through that side.",
+    "move",
+    1,
+    "confirm",
+    "wait",
+    "confirm",
+    "prompt",
+    2,
+    "this swaps the tiles and",
+    "adds bonus points to both.",
+    "prompt",
+    2,
+    "forming longer combos adds",
+    "points to all your tiles.",
+    "confirm",
+    "move",
+    1,
+    "move",
+    2,
+    "wait",
+    "confirm",
+    "prompt",
+    3,
+    "once the tray fills up/",
+    "the cake is scored",
+    "and a new recipe appears.",
+    "move",
+    1,
+    "move",
+    1,
+    "confirm",
+    "confirm",
+    "prompt",
+    2,
+    "you're on your own now!",
+    "good luck!",
+    "reset",
+  ],
+};
 
-// //////////////////////////////
-// // main loop
-// //////////////////////////////
+//////////////////////////////
+// main loop
+//////////////////////////////
 
-// function grab()
-//  set_palette()
-//  palt(13,false)
-//  for k=0,5 do
-//   sspr(k*16,32,16,16,0,0,8,8)
-//   for x=0,7 do
-//    for y=0,7 do
-//     sset(64+k*8+x,120+y,pget(x,y))
-//    end
-//   end
-//  end
-//  cstore()
-// end
+function grab() {
+  set_palette();
+  palt(13, false);
+  for (let k = 0; k < 5; k++) {
+    sspr(k * 16, 32, 16, 16, 0, 0, 8, 8);
+    for (let x = 0; x < 7; x++) {
+      for (let y = 0; y < 7; y++) {
+        sset(64 + k * 8 + x, 120 + y, pget(x, y));
+      }
+    }
+  }
+  cstore();
+}
 
-// function co_init_game()
-//  // counters
-//  g_move_ctr=0
-//  // per-game entities
-//  g_game=game()
-//  g_hand=hand()
-//  g_combo=combo()
-//  g_reqs=reqs()
-//  g_fingers=fingers()
-//  g_tray=nil
-// end
+let g_move_ctr: number;
+let g_game: any;
+let g_hand: any;
+let g_combo: any;
+let g_reqs: any;
+let g_fingers: any;
+let g_tray: any;
+function co_init_game() {
+  // counters
+  g_move_ctr = 0;
+  // per-game entities
+  g_game = game_new();
+  g_hand = hand_new();
+  g_combo = combo_new();
+  g_reqs = reqs_new();
+  g_fingers = fingers_new();
+  g_tray = null;
+}
 
-// function co_end_game()
-//  // retire everything
-//  local retiring={
-//   g_game,g_hand,g_combo,
-//   g_reqs,g_fingers
-//  }
-//  foreach(retiring,e_remove)
-// end
+function co_end_game() {
+  // retire everything
+  const retiring = [g_game, g_hand, g_combo, g_reqs, g_fingers];
+  retiring.forEach(e_remove);
+}
 
-// function co_init_tutorial()
-//  force(g_hand,tutorial.cards)
-//  force(g_reqs,tutorial.recipes)
-//  g_chooser.script=clone(tutorial.script)
-//  g_chooser.pos=v(64,64)
-// end
+function co_init_tutorial() {
+  force(g_hand, tutorial.cards);
+  force(g_reqs, tutorial.recipes);
+  g_chooser.script = clone(tutorial.script);
+  g_chooser.pos = v(64, 64);
+}
 
 const g_inp: any = {};
 let g_t = 0;
@@ -2373,7 +2419,7 @@ const g_particles = particles();
 const g_chooser = pointer();
 const g_runner = runner();
 g_runner.start(main_menu);
-start("poc", 9, 2, update, draw, 60);
+
 function update() {
   g_t += 1;
   // l_do_layouts();
@@ -2385,4 +2431,8 @@ function update() {
 function draw() {
   cls();
   r_render_all();
+}
+
+export function run() {
+  start("poc", 9, 2, update, draw, 60);
 }

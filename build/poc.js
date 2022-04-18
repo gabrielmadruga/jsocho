@@ -657,7 +657,7 @@ function animation_r8() {
         if (e.sym) {
             dt = abs(dt);
         }
-        animation_functions[e.fn](e.d * dt, e);
+        // (animation_functions as any)[e.fn](e.d * dt, e);
     }
 }
 const animation_functions = {
@@ -1753,7 +1753,6 @@ const g_particles = particles();
 const g_chooser = pointer();
 const g_runner = runner();
 g_runner.start(main_menu);
-start("poc", 9, 2, update, draw, 60);
 function update() {
     g_t += 1;
     // l_do_layouts();
@@ -1764,5 +1763,8 @@ function update() {
 function draw() {
     cls();
     r_render_all();
+}
+export function run() {
+    start("poc", 9, 2, update, draw, 60);
 }
 //# sourceMappingURL=poc.js.map

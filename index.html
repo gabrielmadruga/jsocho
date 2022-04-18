@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>JSOcho</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script type="module">
+      import "./build/engine.js";
+      const gamesFilenames = ["mine", "poc"];
+      const game = await import(`./build/${gamesFilenames[1]}.js`);
+      game.run();
+    </script>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>Mine</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
-  <script type="module" src="build/engine.js"></script>
-  <script type="module" src="build/mine.js"></script>
-  <!-- <script type="module" src="build/poc.js"></script> -->
-</head>
-
-<body>
-  <canvas id="canvas"></canvas>
-</body>
-
+  <body>
+    <canvas id="canvas"></canvas>
+  </body>
 </html>

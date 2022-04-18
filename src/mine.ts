@@ -515,7 +515,6 @@ function drawGame() {
 // main stuff
 //-----------------------------
 
-start("mine", 5, 1, update, draw, 30);
 function update() {
   t += 1;
 
@@ -536,4 +535,8 @@ function draw() {
   } else {
     drawGame();
   }
+}
+
+export function run() {
+  start("mine", 5, 1, update, draw, 30);
 }
