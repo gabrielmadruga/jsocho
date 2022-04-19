@@ -1858,7 +1858,7 @@ function hand_new() {}
 
 function hand_init() {
   this.children = [];
-  for (let key in this.rnds) {
+  for (const key in this.rnds) {
     const value = this.rnds[key];
     this[`${key}rnd`] = randomizer(value);
   }
@@ -2368,10 +2368,10 @@ const tutorial = {
 function grab() {
   set_palette();
   palt(13, false);
-  for (let k = 0; k < 5; k++) {
+  for (let k = 0; k < 6; k++) {
     sspr(k * 16, 32, 16, 16, 0, 0, 8, 8);
-    for (let x = 0; x < 7; x++) {
-      for (let y = 0; y < 7; y++) {
+    for (let x = 0; x < 8; x++) {
+      for (let y = 0; y < 8; y++) {
         sset(64 + k * 8 + x, 120 + y, pget(x, y));
       }
     }

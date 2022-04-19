@@ -297,7 +297,7 @@ function sfx(n: number) {
   sampleSource.start();
 }
 
-function music(n: number) {
+function music(n: number, ..._rest: number[]) {
   const sampleSource = audioCtx.createBufferSource();
   sampleSource.buffer = assets.musics[n];
   sampleSource.connect(audioCtx.destination);

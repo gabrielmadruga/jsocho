@@ -119,4 +119,5 @@ dist
 
 *.map
 
+.DS_Store
 ._*
