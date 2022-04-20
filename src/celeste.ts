@@ -1,4 +1,16 @@
-import { camera, music, rnd, start, v } from "./engine";
+import {
+  btn,
+  camera,
+  clamp,
+  flr,
+  music,
+  rnd,
+  sfx,
+  spr,
+  start,
+  v,
+  Vec,
+} from "./engine";
 
 // -- globals --
 // -------------
@@ -13,7 +25,7 @@ let music_timer = 0;
 let sfx_timer = 0;
 let freeze = 0;
 let shake = 0;
-const room = v(0, 0);
+let room = v(0, 0);
 const objects: any[] = [];
 const types: any[] = [];
 let will_restart = false;
@@ -74,261 +86,269 @@ function is_title() {
 // -- effects --
 // -------------
 
-// clouds = {}
-// for i=0,16 do
-// 	add(clouds,{
-// 		x=rnd(128),
-// 		y=rnd(128),
-// 		spd=1+rnd(4),
-// 		w=32+rnd(32)
-// 	})
-// end
+const clouds = [];
+for (let i = 0; i <= 16; i++) {
+  clouds.push({
+    x: rnd(128),
+    y: rnd(128),
+    spd: 1 + rnd(4),
+    w: 32 + rnd(32),
+  });
+}
 
-// particles = {}
-// for i=0,24 do
-// 	add(particles,{
-// 		x=rnd(128),
-// 		y=rnd(128),
-// 		s=0+flr(rnd(5)/4),
-// 		spd=0.25+rnd(5),
-// 		off=rnd(1),
-// 		c=6+flr(0.5+rnd(1))
-// 	})
-// end
+const particles = [];
+for (let i = 0; i <= 24; i++) {
+  particles.push({
+    x: rnd(128),
+    y: rnd(128),
+    s: 0 + flr(rnd(5) / 4),
+    spd: 0.25 + rnd(5),
+    off: rnd(1),
+    c: 6 + flr(0.5 + rnd(1)),
+  });
+}
 
-// dead_particles = {}
+const dead_particles = [];
 
 // -- player entity --
 // -------------------
 
-// player =
-// {
-// 	init=function(this)
-// 		this.p_jump=false
-// 		this.p_dash=false
-// 		this.grace=0
-// 		this.jbuffer=0
-// 		this.djump=max_djump
-// 		this.dash_time=0
-// 		this.dash_effect_time=0
-// 		this.dash_target={x=0,y=0}
-// 		this.dash_accel={x=0,y=0}
-// 		this.hitbox = {x=1,y=3,w=6,h=5}
-// 		this.spr_off=0
-// 		this.was_on_ground=false
-// 		create_hair(this)
-// 	end,
-// 	update=function(this)
-// 		if (pause_player) return
+const player = {
+  init() {
+    this.p_jump = false;
+    this.p_dash = false;
+    this.grace = 0;
+    this.jbuffer = 0;
+    this.djump = max_djump;
+    this.dash_time = 0;
+    this.dash_effect_time = 0;
+    this.dash_target = { x = 0, y = 0 };
+    this.dash_accel = { x = 0, y = 0 };
+    this.hitbox = { x = 1, y = 3, w = 6, h = 5 };
+    this.spr_off = 0;
+    this.was_on_ground = false;
+    create_hair(this);
+  },
+  update() {
+    if (pause_player) return;
 
-// 		local input = btn(k_right) and 1 or (btn(k_left) and -1 or 0)
+    const input = (btn(k_right) && 1) || (btn(k_left) && -1) || 0;
 
-// 		-- spikes collide
-// 		if spikes_at(this.x+this.hitbox.x,this.y+this.hitbox.y,this.hitbox.w,this.hitbox.h,this.spd.x,this.spd.y) then
-// 		 kill_player(this) end
+    // -- spikes collide
+    if (
+      spikes_at(
+        this.x + this.hitbox.x,
+        this.y + this.hitbox.y,
+        this.hitbox.w,
+        this.hitbox.h,
+        this.spd.x,
+        this.spd.y
+      )
+    ) {
+      kill_player(this);
+    }
 
-// 		-- bottom death
-// 		if this.y>128 then
-// 			kill_player(this) end
+    // -- bottom death
+    if (this.y > 128) {
+      kill_player(this);
+    }
 
-// 		local on_ground=this.is_solid(0,1)
-// 		local on_ice=this.is_ice(0,1)
+    const on_ground = this.is_solid(0, 1);
+    const on_ice = this.is_ice(0, 1);
 
-// 		-- smoke particles
-// 		if on_ground and not this.was_on_ground then
-// 		 init_object(smoke,this.x,this.y+4)
-// 		end
+    // -- smoke particles
+    if (on_ground && !this.was_on_ground) {
+      init_object(smoke, this.x, this.y + 4);
+    }
 
-// 		local jump = btn(k_jump) and not this.p_jump
-// 		this.p_jump = btn(k_jump)
-// 		if (jump) then
-// 			this.jbuffer=4
-// 		elseif this.jbuffer>0 then
-// 		 this.jbuffer-=1
-// 		end
+    const jump = btn(k_jump) && !this.p_jump;
+    this.p_jump = btn(k_jump);
+    if (jump) {
+      this.jbuffer = 4;
+    } else if (this.jbuffer > 0) {
+      this.jbuffer -= 1;
+    }
 
-// 		local dash = btn(k_dash) and not this.p_dash
-// 		this.p_dash = btn(k_dash)
+    const dash = btn(k_dash) && !this.p_dash;
+    this.p_dash = btn(k_dash);
 
-// 		if on_ground then
-// 			this.grace=6
-// 			if this.djump<max_djump then
-// 			 psfx(54)
-// 			 this.djump=max_djump
-// 			end
-// 		elseif this.grace > 0 then
-// 		 this.grace-=1
-// 		end
+    if (on_ground) {
+      this.grace = 6;
+      if (this.djump < max_djump) {
+        psfx(54);
+        this.djump = max_djump;
+      }
+    } else if (this.grace > 0) {
+      this.grace -= 1;
+    }
 
-// 		this.dash_effect_time -=1
-//   if this.dash_time > 0 then
-//    init_object(smoke,this.x,this.y)
-//   	this.dash_time-=1
-//   	this.spd.x=appr(this.spd.x,this.dash_target.x,this.dash_accel.x)
-//   	this.spd.y=appr(this.spd.y,this.dash_target.y,this.dash_accel.y)
-//   else
+    this.dash_effect_time -= 1;
+    if (this.dash_time > 0) {
+      init_object(smoke, this.x, this.y);
+      this.dash_time -= 1;
+      this.spd.x = appr(this.spd.x, this.dash_target.x, this.dash_accel.x);
+      this.spd.y = appr(this.spd.y, this.dash_target.y, this.dash_accel.y);
+    } else {
+      // -- move
+      const maxrun = 1;
+      let accel = 0.6;
+      const deccel = 0.15;
 
-// 			-- move
-// 			local maxrun=1
-// 			local accel=0.6
-// 			local deccel=0.15
+      if (!on_ground) {
+        accel = 0.4;
+      } else if (on_ice) {
+        accel = 0.05;
+        if (input == ((this.flip.x && -1) || 1)) {
+          accel = 0.05;
+        }
+      }
 
-// 			if not on_ground then
-// 				accel=0.4
-// 			elseif on_ice then
-// 				accel=0.05
-// 				if input==(this.flip.x and -1 or 1) then
-// 					accel=0.05
-// 				end
-// 			end
+      if (abs(this.spd.x) > maxrun) {
+        this.spd.x = appr(this.spd.x, sign(this.spd.x) * maxrun, deccel);
+      } else {
+        this.spd.x = appr(this.spd.x, input * maxrun, accel);
+      }
 
-// 			if abs(this.spd.x) > maxrun then
-// 		 	this.spd.x=appr(this.spd.x,sign(this.spd.x)*maxrun,deccel)
-// 			else
-// 				this.spd.x=appr(this.spd.x,input*maxrun,accel)
-// 			end
+      // --facing
+      if (this.spd.x != 0) {
+        this.flip.x = this.spd.x < 0;
+      }
 
-// 			--facing
-// 			if this.spd.x!=0 then
-// 				this.flip.x=(this.spd.x<0)
-// 			end
+      // -- gravity
+      let maxfall = 2;
+      let gravity = 0.21;
 
-// 			-- gravity
-// 			local maxfall=2
-// 			local gravity=0.21
+      if (abs(this.spd.y) <= 0.15) {
+        gravity *= 0.5;
+      }
 
-//   	if abs(this.spd.y) <= 0.15 then
-//    	gravity*=0.5
-// 			end
+      // -- wall slide
+      if (input != 0 && this.is_solid(input, 0) && !this.is_ice(input, 0)) {
+        maxfall = 0.4;
+        if (rnd(10) < 2) {
+          init_object(smoke, this.x + input * 6, this.y);
+        }
+      }
 
-// 			-- wall slide
-// 			if input!=0 and this.is_solid(input,0) and not this.is_ice(input,0) then
-// 		 	maxfall=0.4
-// 		 	if rnd(10)<2 then
-// 		 		init_object(smoke,this.x+input*6,this.y)
-// 				end
-// 			end
+      if (!on_ground) {
+        this.spd.y = appr(this.spd.y, maxfall, gravity);
+      }
 
-// 			if not on_ground then
-// 				this.spd.y=appr(this.spd.y,maxfall,gravity)
-// 			end
+      // -- jump
+      if (this.jbuffer > 0) {
+        if (this.grace > 0) {
+          // -- normal jump
+          psfx(1);
+          this.jbuffer = 0;
+          this.grace = 0;
+          this.spd.y = -2;
+          init_object(smoke, this.x, this.y + 4);
+        } else {
+          // -- wall jump
+          const wall_dir =
+            (this.is_solid(-3, 0) && -1) || (this.is_solid(3, 0) && 1) || 0;
+          if (wall_dir != 0) {
+            psfx(2);
+            this.jbuffer = 0;
+            this.spd.y = -2;
+            this.spd.x = -wall_dir * (maxrun + 1);
+            if (!this.is_ice(wall_dir * 3, 0)) {
+              init_object(smoke, this.x + wall_dir * 6, this.y);
+            }
+          }
+        }
+      }
+      // -- dash
+      const d_full = 5;
+      const d_half = d_full * 0.70710678118;
 
-// 			-- jump
-// 			if this.jbuffer>0 then
-// 		 	if this.grace>0 then
-// 		  	-- normal jump
-// 		  	psfx(1)
-// 		  	this.jbuffer=0
-// 		  	this.grace=0
-// 					this.spd.y=-2
-// 					init_object(smoke,this.x,this.y+4)
-// 				else
-// 					-- wall jump
-// 					local wall_dir=(this.is_solid(-3,0) and -1 or this.is_solid(3,0) and 1 or 0)
-// 					if wall_dir!=0 then
-// 			 		psfx(2)
-// 			 		this.jbuffer=0
-// 			 		this.spd.y=-2
-// 			 		this.spd.x=-wall_dir*(maxrun+1)
-// 			 		if not this.is_ice(wall_dir*3,0) then
-// 		 				init_object(smoke,this.x+wall_dir*6,this.y)
-// 						end
-// 					end
-// 				end
-// 			end
+      if (this.djump > 0 && dash) {
+        init_object(smoke, this.x, this.y);
+        this.djump -= 1;
+        this.dash_time = 4;
+        has_dashed = true;
+        this.dash_effect_time = 10;
+        const v_input = (btn(k_up) && -1) || (btn(k_down) && 1) || 0;
+        if (input != 0) {
+          if (v_input != 0) {
+            this.spd.x = input * d_half;
+            this.spd.y = v_input * d_half;
+          } else {
+            this.spd.x = input * d_full;
+            this.spd.y = 0;
+          }
+        } else if (v_input != 0) {
+          this.spd.x = 0;
+          this.spd.y = v_input * d_full;
+        } else {
+          this.spd.x = (this.flip.x && -1) || 1;
+          this.spd.y = 0;
+        }
 
-// 			-- dash
-// 			local d_full=5
-// 			local d_half=d_full*0.70710678118
+        psfx(3);
+        freeze = 2;
+        shake = 6;
+        this.dash_target.x = 2 * sign(this.spd.x);
+        this.dash_target.y = 2 * sign(this.spd.y);
+        this.dash_accel.x = 1.5;
+        this.dash_accel.y = 1.5;
 
-// 			if this.djump>0 and dash then
-// 		 	init_object(smoke,this.x,this.y)
-// 		 	this.djump-=1
-// 		 	this.dash_time=4
-// 		 	has_dashed=true
-// 		 	this.dash_effect_time=10
-// 		 	local v_input=(btn(k_up) and -1 or (btn(k_down) and 1 or 0))
-// 		 	if input!=0 then
-// 		  	if v_input!=0 then
-// 		   	this.spd.x=input*d_half
-// 		   	this.spd.y=v_input*d_half
-// 		  	else
-// 		   	this.spd.x=input*d_full
-// 		   	this.spd.y=0
-// 		  	end
-// 		 	elseif v_input!=0 then
-// 		 		this.spd.x=0
-// 		 		this.spd.y=v_input*d_full
-// 		 	else
-// 		 		this.spd.x=(this.flip.x and -1 or 1)
-// 		  	this.spd.y=0
-// 		 	end
+        if (this.spd.y < 0) {
+          this.dash_target.y *= 0.75;
+        }
 
-// 		 	psfx(3)
-// 		 	freeze=2
-// 		 	shake=6
-// 		 	this.dash_target.x=2*sign(this.spd.x)
-// 		 	this.dash_target.y=2*sign(this.spd.y)
-// 		 	this.dash_accel.x=1.5
-// 		 	this.dash_accel.y=1.5
+        if (this.spd.y != 0) {
+          this.dash_accel.x *= 0.70710678118;
+        }
+        if (this.spd.x != 0) {
+          this.dash_accel.y *= 0.70710678118;
+        } else if (dash && this.djump <= 0) {
+          psfx(9);
+          init_object(smoke, this.x, this.y);
+        }
+      }
 
-// 		 	if this.spd.y<0 then
-// 		 	 this.dash_target.y*=.75
-// 		 	end
+      // -- animation
+      this.spr_off += 0.25;
+      if (!on_ground) {
+        if (this.is_solid(input, 0)) {
+          this.spr = 5;
+        } else {
+          this.spr = 3;
+        }
+      } else if (btn(k_down)) {
+        this.spr = 6;
+      } else if (btn(k_up)) {
+        this.spr = 7;
+      } else if (this.spd.x == 0 || (!btn(k_left) && !btn(k_right))) {
+        this.spr = 1;
+      } else {
+        this.spr = 1 + (this.spr_off % 4);
+      }
 
-// 		 	if this.spd.y!=0 then
-// 		 	 this.dash_accel.x*=0.70710678118
-// 		 	end
-// 		 	if this.spd.x!=0 then
-// 		 	 this.dash_accel.y*=0.70710678118
-// 		 	end
-// 			elseif dash and this.djump<=0 then
-// 			 psfx(9)
-// 			 init_object(smoke,this.x,this.y)
-// 			end
+      // -- next level
+      if (this.y < -4 && level_index() < 30) {
+        next_room();
+      }
 
-// 		end
+      // -- was on the ground
+      this.was_on_ground = on_ground;
+    }
+  },
 
-// 		-- animation
-// 		this.spr_off+=0.25
-// 		if not on_ground then
-// 			if this.is_solid(input,0) then
-// 				this.spr=5
-// 			else
-// 				this.spr=3
-// 			end
-// 		elseif btn(k_down) then
-// 			this.spr=6
-// 		elseif btn(k_up) then
-// 			this.spr=7
-// 		elseif (this.spd.x==0) or (not btn(k_left) and not btn(k_right)) then
-// 			this.spr=1
-// 		else
-// 			this.spr=1+this.spr_off%4
-// 		end
+  draw() {
+    // clamp in screen
+    if (this.x < -1 || this.x > 121) {
+      this.x = clamp(this.x, -1, 121);
+      this.spd.x = 0;
+    }
 
-// 		-- next level
-// 		if this.y<-4 and level_index()<30 then next_room() end
-
-// 		-- was on the ground
-// 		this.was_on_ground=on_ground
-
-// 	end, --<end update loop
-
-// 	draw=function(this)
-
-// 		-- clamp in screen
-// 		if this.x<-1 or this.x>121 then
-// 			this.x=clamp(this.x,-1,121)
-// 			this.spd.x=0
-// 		end
-
-// 		set_hair_color(this.djump)
-// 		draw_hair(this,this.flip.x and -1 or 1)
-// 		spr(this.spr,this.x,this.y,1,1,this.flip.x,this.flip.y)
-// 		unset_hair_color()
-// 	end
-// }
+    set_hair_color(this.djump);
+    draw_hair(this, (this.flip.x && -1) || 1);
+    spr(this.spr, this.x, this.y, 1, 1, this.flip.x, this.flip.y);
+    unset_hair_color();
+  },
+};
 
 // psfx=function(num)
 //  if sfx_timer<=0 then
@@ -1095,63 +1115,61 @@ function is_title() {
 // -- room functions --
 // --------------------
 
-// function restart_room()
-// 	will_restart=true
-// 	delay_restart=15
-// end
+function restart_room() {
+  will_restart = true;
+  delay_restart = 15;
+}
 
-// function next_room()
-//  if room.x==2 and room.y==1 then
-//   music(30,500,7)
-//  elseif room.x==3 and room.y==1 then
-//   music(20,500,7)
-//  elseif room.x==4 and room.y==2 then
-//   music(30,500,7)
-//  elseif room.x==5 and room.y==3 then
-//   music(30,500,7)
-//  end
+function next_room() {
+  if (room.x == 2 && room.y == 1) {
+    music(30, 500, 7);
+  } else if (room.x == 3 && room.y == 1) {
+    music(20, 500, 7);
+  } else if (room.x == 4 && room.y == 2) {
+    music(30, 500, 7);
+  } else if (room.x == 5 && room.y == 3) {
+    music(30, 500, 7);
+  }
 
-// 	if room.x==7 then
-// 		load_room(0,room.y+1)
-// 	else
-// 		load_room(room.x+1,room.y)
-// 	end
-// end
+  if (room.x == 7) {
+    load_room(0, room.y + 1);
+  } else {
+    load_room(room.x + 1, room.y);
+  }
+}
 
-// function load_room(x,y)
-// 	has_dashed=false
-// 	has_key=false
+function load_room(newRoom: Vec) {
+  has_dashed = false;
+  has_key = false;
 
-// 	--remove existing objects
-// 	foreach(objects,destroy_object)
+  // --remove existing objects
+  objects.forEach(destroy_object);
 
-// 	--current room
-// 	room.x = x
-// 	room.y = y
+  // --current room
+  room = newRoom;
 
-// 	-- entities
-// 	for tx=0,15 do
-// 		for ty=0,15 do
-// 			local tile = mget(room.x*16+tx,room.y*16+ty);
-// 			if tile==11 then
-// 				init_object(platform,tx*8,ty*8).dir=-1
-// 			elseif tile==12 then
-// 				init_object(platform,tx*8,ty*8).dir=1
-// 			else
-// 				foreach(types,
-// 				function(type)
-// 					if type.tile == tile then
-// 						init_object(type,tx*8,ty*8)
-// 					end
-// 				end)
-// 			end
-// 		end
-// 	end
+  // -- entities
+  for (let tx = 0; tx < 16; tx++) {
+    for (let ty = 0; ty < 16; ty++) {
+      const tile = mget(room.x * 16 + tx, room.y * 16 + ty);
+      if (tile == 11) {
+        init_object(platform, tx * 8, ty * 8).dir = -1;
+      } else if (tile == 12) {
+        init_object(platform, tx * 8, ty * 8).dir = 1;
+      } else {
+        types.forEach(function (type) {
+          if (type.tile == tile) {
+            init_object(type, tx * 8, ty * 8);
+          }
+        });
+      }
+    }
+  }
 
-// 	if not is_title() then
-// 		init_object(room_title,0,0)
-// 	end
-// end
+  if (!is_title()) {
+    init_object(room_title, 0, 0);
+  }
+}
 
 // -- update function --
 // -----------------------

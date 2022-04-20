@@ -535,56 +535,58 @@ function l_apply(e: Entity) {
 // drawing from templates
 //////////////////////////////
 
-// function draw_from_template(tpl) {
-//     for (let e_i = 0; e_i < tpl.length; e_i++) {
-//         const e = tpl[e_i];
-//         e.fn();
-//     }
-// }
+function draw_from_template(tpl: any) {
+  for (let e_i = 0; e_i < tpl.length; e_i++) {
+    const e = tpl[e_i];
+    e.fn();
+  }
+}
 
-// //////////////////////////////
-// // drawing shadows
-// //////////////////////////////
+//////////////////////////////
+// drawing shadows
+//////////////////////////////
 
-// function shadow(x1: number, y1: number, x2: number, y2: number, plt: number) {
-//     if (x2 - x1 > 63) {
-//         shadow(x1, y1, x1 + 63, y2, plt);
-//         shadow(x1 + 64, y1, x2, y2, plt);
-//         return;
-//     }
-//     x1 = round(x1);
-//     x2 = round(x2);
-//     y1 = round(y1);
-//     y2 = round(y2);
-//     let al = 0;
-//     let ar = 0;
-//     if (x1 % 2 == 1) {
-//         x1 -= 1;
-//         al = 1;
-//     }
-//     if (x2 % 2 == 0) {
-//         x2 += 1;
-//         ar = 1;
-//     }
-//     // copy to spritemem
-//     local memw = (x2 - x1 + 1) / 2
-//     local saddr = 0x6000 + shl(y1, 6) + x1 / 2
-//     local daddr = 0x1800
-//     for y = y1, y2 do
-//         memcpy(daddr, saddr, memw)
-//     saddr += 64
-//     daddr += 64
-//     end
-//     // copy back to screen
-//     // with shifted palette
-//     set_palette(plt)
-//     palt(13, false)
-//     local w, h = x2 - x1 + 1 - al - ar, y2 - y1 + 1
-//     sspr(al, 96, w, h, x1 + al, y1)
-//     set_palette()
-// }
+function shadow(x1: number, y1: number, x2: number, y2: number, plt: number) {
+  if (x2 - x1 > 63) {
+    shadow(x1, y1, x1 + 63, y2, plt);
+    shadow(x1 + 64, y1, x2, y2, plt);
+    return;
+  }
+  x1 = round(x1);
+  x2 = round(x2);
+  y1 = round(y1);
+  y2 = round(y2);
+  let al = 0;
+  let ar = 0;
+  if (x1 % 2 == 1) {
+    x1 -= 1;
+    al = 1;
+  }
+  if (x2 % 2 == 0) {
+    x2 += 1;
+    ar = 1;
+  }
+  // TODO:
+  // copy to spritemem
+  // local memw = (x2 - x1 + 1) / 2
+  // local saddr = 0x6000 + shl(y1, 6) + x1 / 2
+  // local daddr = 0x1800
+  // for y = y1, y2 do
+  //     memcpy(daddr, saddr, memw)
+  // saddr += 64
+  // daddr += 64
+  // end
+  // // copy back to screen
+  // // with shifted palette
+  // set_palette(plt)
+  // palt(13, false)
+  // local w, h = x2 - x1 + 1 - al - ar, y2 - y1 + 1
+  // sspr(al, 96, w, h, x1 + al, y1)
+  // set_palette()
+}
 
-// obfn.sh = shadow
+const obfn: any = {};
+obfn.sh = shadow;
 
 //////////////////////////////
 //////////////////////////////
@@ -593,20 +595,20 @@ function l_apply(e: Entity) {
 // // generic children work
 // //////////////////////////////
 
-// function move(child,parent)
-//  local prev=child.parent
-//  if (prev) del(prev.children,child)
-//  if (parent) index_add(parent,"children",child)
-//  child.parent=parent
-//  // remember when everything moved
-//  // to allow ordering
-//  child.moved_on=g_move_ctr
-//  g_move_ctr+=0x0.001
-// end
+function move(child: any, parent: any) {
+  const prev = child.parent;
+  if (prev) prev.children.filter((c: any) => c === child);
+  if (parent) index_add(parent, "children", child);
+  child.parent = parent;
+  // remember when everything moved
+  // to allow ordering
+  child.moved_on = g_move_ctr;
+  g_move_ctr += 0.001;
+}
 
-// function is_empty(parent)
-//  return #(parent.children or {})==0
-// end
+function is_empty(parent: any) {
+  return (parent.children ?? []).length === 0;
+}
 
 //////////////////////////////
 // background

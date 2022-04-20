@@ -4,7 +4,7 @@ The idea behind jsocho is implementing a game engine with the same API as Pico-8
 To do this I will translate Pico-8 games while I implement the engine.
 The objective is learning:
 - Translating games will help to lear how games are made [(learning by copying)](https://www.artofmanliness.com/career-wealth/career/want-to-become-a-better-writer-copy-the-work-of-others/). At first, translations will be 1 to 1, but improvements will be made as there are no actual limits like in Pico-8.
-- Building the engine will also be a learning oportunity. It will use canvas initially, but it could be improved with WebGL latter on.
+- Building the engine will also be a learning oportunity. It will use canvas initially, but it could be improved with WebGPU latter on.
 
 To get started just
 
