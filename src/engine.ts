@@ -197,6 +197,7 @@ const sqrt = Math.sqrt;
 const abs = Math.abs;
 const cos = (n: number) => Math.cos(n * 2 * Math.PI);
 const sin = (n: number) => -Math.sin(n * 2 * Math.PI);
+const sign = (v: number) => Math.sign(v);
 
 // (inclusive of 0, but not x)
 function rnd(x = 1) {
@@ -297,11 +298,12 @@ function sfx(n: number) {
   sampleSource.start();
 }
 
-function music(n: number, ..._rest: number[]) {
-  const sampleSource = audioCtx.createBufferSource();
-  sampleSource.buffer = assets.musics[n];
-  sampleSource.connect(audioCtx.destination);
-  sampleSource.start();
+function music(n: number, ...rest: number[]) {
+  // TODO: review how music works
+  // const sampleSource = audioCtx.createBufferSource();
+  // sampleSource.buffer = assets.musics[n];
+  // sampleSource.connect(audioCtx.destination);
+  // sampleSource.start();
 }
 
 function cls(color = 0) {
@@ -369,7 +371,14 @@ function printc(str: string, cx: number, y: number, color: Color) {
   print(str, x, y, color);
 }
 
-function spr(n: number, dx: number, dy: number, w = 1, h = 1) {
+function spr(
+  n: number,
+  dx: number,
+  dy: number,
+  w = 1,
+  h = 1,
+  ...rest: any[] // TODO:
+) {
   dx = flr(dx);
   dy = flr(dy);
   const spritesPerRow = 16;
@@ -450,7 +459,8 @@ function map(
   sx: number,
   sy: number,
   cell_w: number,
-  cell_h: number
+  cell_h: number,
+  layer?: number // TODO:
 ) {
   for (let cy = 0; cy < cell_h; cy++) {
     const y = sy + cy * spriteSizePx;
@@ -720,6 +730,7 @@ export {
   cos,
   sqrt,
   abs,
+  sign,
   // vector
   v,
   vma,

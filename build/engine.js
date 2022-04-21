@@ -150,6 +150,7 @@ const sqrt = Math.sqrt;
 const abs = Math.abs;
 const cos = (n) => Math.cos(n * 2 * Math.PI);
 const sin = (n) => -Math.sin(n * 2 * Math.PI);
+const sign = (v) => Math.sign(v);
 // (inclusive of 0, but not x)
 function rnd(x = 1) {
     return Math.random() * x;
@@ -233,11 +234,12 @@ function sfx(n) {
     sampleSource.connect(audioCtx.destination);
     sampleSource.start();
 }
-function music(n) {
-    const sampleSource = audioCtx.createBufferSource();
-    sampleSource.buffer = assets.musics[n];
-    sampleSource.connect(audioCtx.destination);
-    sampleSource.start();
+function music(n, ...rest) {
+    // TODO: rest
+    // const sampleSource = audioCtx.createBufferSource();
+    // sampleSource.buffer = assets.musics[n];
+    // sampleSource.connect(audioCtx.destination);
+    // sampleSource.start();
 }
 function cls(color = 0) {
     for (let i = 0; i < pixelbuffer.length; i += 4) {
@@ -289,7 +291,8 @@ function printc(str, cx, y, color) {
     const x = cx - halfStrScreenLengthPx;
     print(str, x, y, color);
 }
-function spr(n, dx, dy, w = 1, h = 1) {
+function spr(n, dx, dy, w = 1, h = 1, ...rest // TODO:
+) {
     dx = flr(dx);
     dy = flr(dy);
     const spritesPerRow = 16;
@@ -348,7 +351,9 @@ function palt(c, t) {
     _state.transparentColors[c] = t;
 }
 const _map = [[]];
-function map(cell_x, cell_y, sx, sy, cell_w, cell_h) {
+function map(cell_x, cell_y, sx, sy, cell_w, cell_h, layer // TODO:
+) {
+    debugger;
     for (let cy = 0; cy < cell_h; cy++) {
         const y = sy + cy * spriteSizePx;
         for (let cx = 0; cx < cell_w; cx++) {
@@ -552,7 +557,7 @@ start,
 // input
 btn, 
 // math
-flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, mid, sin, cos, sqrt, abs, 
+flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, mid, sin, cos, sqrt, abs, sign, 
 // vector
 v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp, 
 // graphics

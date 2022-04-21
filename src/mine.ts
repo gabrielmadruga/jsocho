@@ -537,6 +537,6 @@ function draw() {
   }
 }
 
-export function run() {
-  start("mine", 5, 1, update, draw, 30);
+export async function run() {
+  await start("mine", 5, 1, update, draw, 30);
 }

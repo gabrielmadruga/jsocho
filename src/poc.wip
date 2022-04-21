@@ -2435,6 +2435,6 @@ function draw() {
   r_render_all();
 }
 
-export function run() {
-  start("poc", 9, 2, update, draw, 60);
+export async function run() {
+  await start("poc", 9, 2, update, draw, 60);
 }

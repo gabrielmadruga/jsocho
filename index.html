@@ -7,9 +7,9 @@
     <link href="style.css" rel="stylesheet" type="text/css" />
     <script type="module">
       import "./build/engine.js";
-      const gamesFilenames = ["mine", "poc"];
-      const game = await import(`./build/${gamesFilenames[1]}.js`);
-      game.run();
+      const gamesFilenames = ["mine", "poc", "celeste"];
+      const game = await import(`./build/${gamesFilenames[2]}.js`);
+      await game.run();
     </script>
   </head>
 
