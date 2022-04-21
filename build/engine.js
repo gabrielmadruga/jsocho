@@ -63,6 +63,7 @@ if (!ctx)
     throw new Error("Failed to _bufferCanvas.getContext");
 const bufferImageData = ctx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height);
 const pixelbuffer = bufferImageData.data;
+cls();
 const pixelStride = 4;
 const lineStride = 4 * bufferCanvas.width;
 const spriteSizePx = 8;
@@ -235,7 +236,7 @@ function sfx(n) {
     sampleSource.start();
 }
 function music(n, ...rest) {
-    // TODO: rest
+    // TODO: review how music works
     // const sampleSource = audioCtx.createBufferSource();
     // sampleSource.buffer = assets.musics[n];
     // sampleSource.connect(audioCtx.destination);
@@ -353,7 +354,6 @@ function palt(c, t) {
 const _map = [[]];
 function map(cell_x, cell_y, sx, sy, cell_w, cell_h, layer // TODO:
 ) {
-    debugger;
     for (let cy = 0; cy < cell_h; cy++) {
         const y = sy + cy * spriteSizePx;
         for (let cx = 0; cx < cell_w; cx++) {
@@ -501,13 +501,24 @@ async function loadMap(name) {
     const response = await fetch(`assets/${name}/map.txt`);
     let mapStr = await response.text();
     mapStr = mapStr.replace(/(\r\n|\n|\r)/gm, "");
-    for (let i = 0; i < mapStr.length; i += 2) {
-        const mapWidth = 128;
+    const mapWidth = 128;
+    for (let i = 0; i < mapWidth * (32 * 2); i += 2) {
         const x = (i / 2) % mapWidth;
         const y = flr(i / 2 / mapWidth);
         if (!_map[x])
             _map[x] = [];
         _map[x][y] = parseInt(mapStr.slice(i, i + 2), 16);
+    }
+    for (let i = mapWidth * (32 * 2); i < mapWidth * (64 * 2); i += 2) {
+        const x = (i / 2) % mapWidth;
+        const y = flr(i / 2 / mapWidth);
+        if (!_map[x])
+            _map[x] = [];
+        _map[x][y] = parseInt(mapStr
+            .slice(i, i + 2)
+            .split("")
+            .reverse()
+            .join(""), 16);
     }
 }
 async function loadAudioFile(audioContext, filepath) {

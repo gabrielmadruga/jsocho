@@ -33,7 +33,7 @@ To export the assests with Pico-8 load the game and load it in Pico-8:
 - Put the downloaded cart in the carts folder. Type `folder` in Pico-8 to open the carts folder.
 After loading the game just press `esc` and type `export sprites.png`, `export sfx%d.wav`, then press `esc` go to the music tab and press `esc` again to type `export music%d.wav`.
 All the files should be in the carts folder.
-Type `save gameName` to generate a `p8` file which can be opened to copy the map data and source code.
+Type `save gameName` to generate a `p8` file which can be opened to copy the map data and source code. If the game uses the second half of the spritesheet as map data, copy half of the gfx section to the map.txt file.
 
 ## Extra additions to the engine
 Vectors are a common used thing, so utilities for working with them were added, use `v()` to create vectors. All operations start with `v_`.

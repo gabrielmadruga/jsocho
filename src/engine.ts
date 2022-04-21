@@ -105,6 +105,7 @@ const bufferImageData = ctx.getImageData(
   bufferCanvas.height
 );
 const pixelbuffer = bufferImageData.data;
+cls();
 const pixelStride = 4;
 const lineStride = 4 * bufferCanvas.width;
 const spriteSizePx = 8;
@@ -648,12 +649,26 @@ async function loadMap(name: string) {
   const response = await fetch(`assets/${name}/map.txt`);
   let mapStr = await response.text();
   mapStr = mapStr.replace(/(\r\n|\n|\r)/gm, "");
-  for (let i = 0; i < mapStr.length; i += 2) {
-    const mapWidth = 128;
+  const mapWidth = 128;
+  for (let i = 0; i < mapWidth * (32 * 2); i += 2) {
     const x = (i / 2) % mapWidth;
     const y = flr(i / 2 / mapWidth);
     if (!_map[x]) _map[x] = [];
     _map[x][y] = parseInt(mapStr.slice(i, i + 2), 16);
+  }
+
+  for (let i = mapWidth * (32 * 2); i < mapWidth * (64 * 2); i += 2) {
+    const x = (i / 2) % mapWidth;
+    const y = flr(i / 2 / mapWidth);
+    if (!_map[x]) _map[x] = [];
+    _map[x][y] = parseInt(
+      mapStr
+        .slice(i, i + 2)
+        .split("")
+        .reverse()
+        .join(""),
+      16
+    );
   }
 }
 
