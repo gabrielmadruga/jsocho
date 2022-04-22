@@ -113,15 +113,26 @@ const spriteSizePx = 8;
 const audioCtx = new AudioContext();
 let assets: Assets;
 
-async function start(
-  name: string,
-  sfxCount: number,
-  musicCount: number,
-  update: () => void,
-  draw: () => void,
-  targetFPS: 30 | 60
-) {
+type StartArgs = {
+  name: string;
+  sfxCount: number;
+  musicCount: number;
+  init?: () => void;
+  update: () => void;
+  draw: () => void;
+  targetFPS?: 30 | 60;
+};
+async function start({
+  name,
+  sfxCount,
+  musicCount,
+  init,
+  update,
+  draw,
+  targetFPS = 30,
+}: StartArgs) {
   assets = await loadAssets(name, sfxCount, musicCount); // TODO: progress callbacks?
+  init?.();
   const msPerFrame = 1000 / targetFPS;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateIntervalId = window.setInterval(() => {
@@ -473,6 +484,13 @@ function map(
   }
 }
 
+function mget(x: number, y: number) {
+  return _map[x][y];
+}
+function mset(x: number, y: number, value: number) {
+  _map[x][y] = value;
+}
+
 function btn(n?: number) {
   const map = [
     "ArrowLeft",
@@ -766,6 +784,8 @@ export {
   cls,
   spr,
   map,
+  mget,
+  mset,
   print,
   printc,
   rect,

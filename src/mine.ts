@@ -538,5 +538,11 @@ function draw() {
 }
 
 export async function run() {
-  await start("mine", 5, 1, update, draw, 30);
+  await start({
+    name: "mine",
+    sfxCount: 5,
+    musicCount: 1,
+    update,
+    draw,
+  });
 }

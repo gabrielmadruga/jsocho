@@ -1,4 +1,4 @@
-import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, } from "./engine.js";
+import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, } from "./engine.js";
 // -- globals --
 // -------------
 let frames = 0;
@@ -32,7 +32,9 @@ const k_jump = 4;
 const k_dash = 5;
 // -- entry point --
 // -----------------
-title_screen();
+function init() {
+    title_screen();
+}
 function title_screen() {
     got_fruit.length = 0;
     for (let i = 0; i < 30; i++) {
@@ -338,10 +340,11 @@ const player_spawn = {
         this.spr = 3;
         this.target = { x: this.x, y: this.y };
         this.y = 128;
-        this.spd.y = -4;
+        this.spd = { x: 0, y: -4 };
         this.state = 0;
         this.delay = 0;
         this.solids = false;
+        this.flip = { x: 0, y: 0 };
         create_hair(this);
     },
     update() {
@@ -1034,7 +1037,7 @@ function init_object(type, x, y) {
     };
     objects.push(obj);
     if (obj.type.init) {
-        obj.type.init(obj);
+        obj.type.init.apply(obj);
     }
     return obj;
 }
@@ -1102,7 +1105,7 @@ function load_room(x, y) {
     // -- entities
     for (let tx = 0; tx < 16; tx++) {
         for (let ty = 0; ty < 16; ty++) {
-            const tile = 0; //TODO: mget(room.x * 16 + tx, room.y * 16 + ty);
+            const tile = tile_at(tx, ty);
             if (tile == 11) {
                 init_object(platform, tx * 8, ty * 8).dir = -1;
             }
@@ -1163,10 +1166,10 @@ function update() {
         }
     }
     //  update each object
-    objects.forEach(function (obj) {
+    objects.forEach((obj) => {
         obj.move(obj.spd.x, obj.spd.y);
         if (obj.type.update) {
-            obj.type.update(obj);
+            obj.type.update.apply(obj);
         }
     });
     //  start game
@@ -1312,7 +1315,7 @@ function draw() {
 }
 function draw_object(obj) {
     if (obj.type.draw) {
-        obj.type.draw(obj);
+        obj.type.draw.apply(obj);
     }
     else if (obj.spr > 0) {
         spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y); // TODO: implement last two parameters in engine
@@ -1359,7 +1362,7 @@ function tile_flag_at(x, y, w, h, flag) {
     return false;
 }
 function tile_at(x, y) {
-    return 0; // mget(room.x * 16 + x, room.y * 16 + y); TODO: mget
+    return mget(room.x * 16 + x, room.y * 16 + y);
 }
 function spikes_at(x, y, w, h, xspd, yspd) {
     for (let i = max(0, flr(x / 8)); i <= min(15, (x + w - 1) / 8); i++) {
@@ -1386,6 +1389,13 @@ function spikes_at(x, y, w, h, xspd, yspd) {
     return false;
 }
 export async function run() {
-    await start("celeste", 63, 1, update, draw, 30);
+    await start({
+        name: "celeste",
+        sfxCount: 63,
+        musicCount: 1,
+        init,
+        update,
+        draw,
+    });
 }
 //# sourceMappingURL=celeste.js.map

@@ -69,8 +69,9 @@ const lineStride = 4 * bufferCanvas.width;
 const spriteSizePx = 8;
 const audioCtx = new AudioContext();
 let assets;
-async function start(name, sfxCount, musicCount, update, draw, targetFPS) {
+async function start({ name, sfxCount, musicCount, init, update, draw, targetFPS = 30, }) {
     assets = await loadAssets(name, sfxCount, musicCount); // TODO: progress callbacks?
+    init?.();
     const msPerFrame = 1000 / targetFPS;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const updateIntervalId = window.setInterval(() => {
@@ -363,6 +364,12 @@ function map(cell_x, cell_y, sx, sy, cell_w, cell_h, layer // TODO:
         }
     }
 }
+function mget(x, y) {
+    return _map[x][y];
+}
+function mset(x, y, value) {
+    _map[x][y] = value;
+}
 function btn(n) {
     const map = [
         "ArrowLeft",
@@ -572,7 +579,7 @@ flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, mid, sin, cos, sqrt, a
 // vector
 v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp, 
 // graphics
-camera, cls, spr, map, print, printc, rect, rectfill, pal, palt, 
+camera, cls, spr, map, mget, mset, print, printc, rect, rectfill, pal, palt, 
 // audio
 sfx, music, 
 // cartdata

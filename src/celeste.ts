@@ -19,6 +19,7 @@ import {
   map,
   abs,
   sign,
+  mget,
 } from "./engine.js";
 
 // -- globals --
@@ -58,7 +59,9 @@ const k_dash = 5;
 // -- entry point --
 // -----------------
 
-title_screen();
+function init() {
+  title_screen();
+}
 
 function title_screen() {
   got_fruit.length = 0;
@@ -399,18 +402,19 @@ function unset_hair_color() {
 
 const player_spawn = {
   tile: 1,
-  init() {
+  init(this: any) {
     sfx(4);
     this.spr = 3;
     this.target = { x: this.x, y: this.y };
     this.y = 128;
-    this.spd.y = -4;
+    this.spd = { x: 0, y: -4 };
     this.state = 0;
     this.delay = 0;
     this.solids = false;
+    this.flip = { x: 0, y: 0 };
     create_hair(this);
   },
-  update() {
+  update(this: any) {
     // jumping up
     if (this.state == 0) {
       if (this.y < this.target.y + 16) {
@@ -443,7 +447,7 @@ const player_spawn = {
       }
     }
   },
-  draw() {
+  draw(this: any) {
     set_hair_color(max_djump);
     draw_hair(this, 1);
     spr(this.spr, this.x, this.y, 1, 1, this.flip.x, this.flip.y);
@@ -454,11 +458,11 @@ types.push(player_spawn);
 
 const spring = {
   tile: 18,
-  init() {
+  init(this: any) {
     this.hide_in = 0;
     this.hide_for = 0;
   },
-  update() {
+  update(this: any) {
     if (this.hide_for > 0) {
       this.hide_for -= 1;
       if (this.hide_for <= 0) {
@@ -508,13 +512,13 @@ function break_spring(obj: any) {
 
 const balloon = {
   tile: 22,
-  init() {
+  init(this: any) {
     this.offset = rnd(1);
     this.start = this.y;
     this.timer = 0;
     this.hitbox = { x: -1, y: -1, w: 10, h: 10 };
   },
-  update() {
+  update(this: any) {
     if (this.spr == 22) {
       this.offset += 0.01;
       this.y = this.start + sin(this.offset) * 2;
@@ -534,7 +538,7 @@ const balloon = {
       this.spr = 22;
     }
   },
-  draw() {
+  draw(this: any) {
     if (this.spr == 22) {
       spr(13 + ((this.offset * 8) % 3), this.x, this.y + 6);
       spr(this.spr, this.x, this.y);
@@ -549,7 +553,7 @@ const fall_floor = {
     this.state = 0;
     this.solid = true;
   },
-  update() {
+  update(this: any) {
     // idling
     if (this.state == 0) {
       if (
@@ -578,7 +582,7 @@ const fall_floor = {
       }
     }
   },
-  draw() {
+  draw(this: any) {
     if (this.state != 2) {
       if (this.state != 1) {
         spr(23, this.x, this.y);
@@ -625,11 +629,11 @@ const smoke = {
 const fruit = {
   tile: 26,
   if_not_fruit: true,
-  init() {
+  init(this: any) {
     this.start = this.y;
     this.off = 0;
   },
-  update() {
+  update(this: any) {
     const hit = this.collide(player, 0, 0);
     if (hit) {
       hit.djump = max_djump;
@@ -648,14 +652,14 @@ types.push(fruit);
 const fly_fruit = {
   tile: 28,
   if_not_fruit: true,
-  init() {
+  init(this: any) {
     this.start = this.y;
     this.fly = false;
     this.step = 0.5;
     this.solids = false;
     this.sfx_delay = 8;
   },
-  update() {
+  update(this: any) {
     // ly away
     if (this.fly) {
       if (this.sfx_delay > 0) {
@@ -687,7 +691,7 @@ const fly_fruit = {
       destroy_object(this);
     }
   },
-  draw() {
+  draw(this: any) {
     let off = 0;
     if (!this.fly) {
       const dir = sin(this.step);
@@ -727,7 +731,7 @@ const lifeup = {
 const fake_wall = {
   tile: 64,
   if_not_fruit: true,
-  update() {
+  update(this: any) {
     this.hitbox = { x: -1, y: -1, w: 18, h: 18 };
     const hit = this.collide(player, 0, 0);
     if (hit && hit.dash_effect_time > 0) {
@@ -745,7 +749,7 @@ const fake_wall = {
     }
     this.hitbox = { x: 0, y: 0, w: 16, h: 16 };
   },
-  draw() {
+  draw(this: any) {
     spr(64, this.x, this.y);
     spr(65, this.x + 8, this.y);
     spr(80, this.x, this.y + 8);
@@ -757,7 +761,7 @@ types.push(fake_wall);
 const key = {
   tile: 8,
   if_not_fruit: true,
-  update() {
+  update(this: any) {
     const was = flr(this.spr);
     this.spr = 9 + (sin(frames / 30) + 0.5) * 1;
     const is = flr(this.spr);
@@ -777,12 +781,12 @@ types.push(key);
 const chest = {
   tile: 20,
   if_not_fruit: true,
-  init() {
+  init(this: any) {
     this.x -= 4;
     this.start = this.x;
     this.timer = 20;
   },
-  update() {
+  update(this: any) {
     if (has_key) {
       this.timer -= 1;
       this.x = this.start - 1 + rnd(3);
@@ -828,7 +832,7 @@ const platform = {
 const message = {
   tile: 86,
   last: 0,
-  draw() {
+  draw(this: any) {
     this.text =
       "-- celeste mountain --#this memorial to those# perished on the climb";
     if (this.check(player, 4, 0)) {
@@ -866,11 +870,11 @@ types.push(message);
 
 const big_chest = {
   tile: 96,
-  init() {
+  init(this: any) {
     this.state = 0;
     this.hitbox.w = 16;
   },
-  draw() {
+  draw(this: any) {
     if (this.state == 0) {
       const hit = this.collide(player, 0, 8);
       if (hit && hit.is_solid(0, 1)) {
@@ -959,7 +963,7 @@ const orb = {
 
 const flag = {
   tile: 118,
-  init() {
+  init(this: any) {
     this.x += 5;
     this.score = 0;
     this.show = false;
@@ -969,7 +973,7 @@ const flag = {
       }
     }
   },
-  draw() {
+  draw(this: any) {
     this.spr = 118 + ((frames / 5) % 3);
     spr(this.spr, this.x, this.y);
     if (this.show) {
@@ -1136,7 +1140,7 @@ function init_object(type: any, x: number, y: number) {
 
   objects.push(obj);
   if (obj.type.init) {
-    obj.type.init(obj);
+    obj.type.init.apply(obj);
   }
   return obj;
 }
@@ -1210,7 +1214,7 @@ function load_room(x: number, y: number) {
   // -- entities
   for (let tx = 0; tx < 16; tx++) {
     for (let ty = 0; ty < 16; ty++) {
-      const tile = 0 as number; //TODO: mget(room.x * 16 + tx, room.y * 16 + ty);
+      const tile = tile_at(tx, ty);
       if (tile == 11) {
         init_object(platform, tx * 8, ty * 8).dir = -1;
       } else if (tile == 12) {
@@ -1278,10 +1282,10 @@ function update() {
   }
 
   //  update each object
-  objects.forEach(function (obj) {
+  objects.forEach((obj) => {
     obj.move(obj.spd.x, obj.spd.y);
     if (obj.type.update) {
-      obj.type.update(obj);
+      obj.type.update.apply(obj);
     }
   });
 
@@ -1451,7 +1455,7 @@ function draw() {
 
 function draw_object(obj: any) {
   if (obj.type.draw) {
-    obj.type.draw(obj);
+    obj.type.draw.apply(obj);
   } else if (obj.spr > 0) {
     spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y); // TODO: implement last two parameters in engine
   }
@@ -1516,7 +1520,7 @@ function tile_flag_at(
 }
 
 function tile_at(x: number, y: number) {
-  return 0; // mget(room.x * 16 + x, room.y * 16 + y); TODO: mget
+  return mget(room.x * 16 + x, room.y * 16 + y);
 }
 
 function spikes_at(
@@ -1553,5 +1557,12 @@ function spikes_at(
 }
 
 export async function run() {
-  await start("celeste", 63, 1, update, draw, 30);
+  await start({
+    name: "celeste",
+    sfxCount: 63,
+    musicCount: 1,
+    init,
+    update,
+    draw,
+  });
 }
