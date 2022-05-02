@@ -153,6 +153,7 @@ async function loadAssets(name: string, sfxCount: number, musicCount: number) {
     loadImageData(`assets/${name}/sprites.png`),
     loadAudios(name, audioCtx, sfxCount, musicCount),
     loadMap(name),
+    loadSpriteFlags(name),
   ]);
   const assets: Assets = {
     fontPixels: datas[0].data,
@@ -401,6 +402,15 @@ function spr(
   copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer);
 }
 
+const _sprite_flags: number[] = [];
+function fget(sprite: number, flag?: number): number | boolean {
+  if (flag === undefined) {
+    return _sprite_flags[sprite];
+  } else {
+    return (_sprite_flags[sprite] & (1 << flag)) !== 0;
+  }
+}
+
 function rect(
   x0: number,
   y0: number,
@@ -472,14 +482,21 @@ function map(
   sy: number,
   cell_w: number,
   cell_h: number,
-  layer?: number // TODO:
+  layer?: number
 ) {
   for (let cy = 0; cy < cell_h; cy++) {
     const y = sy + cy * spriteSizePx;
     for (let cx = 0; cx < cell_w; cx++) {
       const s = _map[cell_x + cx][cell_y + cy];
       const x = sx + cx * spriteSizePx;
-      spr(s, x, y);
+      if (layer !== undefined) {
+        const sFlags = _sprite_flags[s];
+        if ((sFlags & layer) !== 0) {
+          spr(s, x, y);
+        }
+      } else {
+        spr(s, x, y);
+      }
     }
   }
 }
@@ -663,10 +680,17 @@ async function loadImageData(path: string) {
   return imageData;
 }
 
+// Map data is stored in the .p8 file as 32 lines of 256 hexadecimal digits (128 bytes).
+// Each pair of digits (most significant nybble first) is the sprite ID for a tile on the map,
+// ordered left to right, top to bottom, for the first 32 rows of the map.
+// The map area is 128 tiles wide by 64 tiles high. Map memory describes the top 32 rows.
+// If the cart author draws tiles in the bottom 32 rows, this is stored in the bottom of the __gfx__ section.
+// When porting a game from pico 8, that data is copied to the map.txt file.
 async function loadMap(name: string) {
   const response = await fetch(`assets/${name}/map.txt`);
   let mapStr = await response.text();
   mapStr = mapStr.replace(/(\r\n|\n|\r)/gm, "");
+  // Load normal map data
   const mapWidth = 128;
   for (let i = 0; i < mapWidth * (32 * 2); i += 2) {
     const x = (i / 2) % mapWidth;
@@ -674,7 +698,7 @@ async function loadMap(name: string) {
     if (!_map[x]) _map[x] = [];
     _map[x][y] = parseInt(mapStr.slice(i, i + 2), 16);
   }
-
+  // Load data from bottom half of spritesheet (second half of __gfx__))
   for (let i = mapWidth * (32 * 2); i < mapWidth * (64 * 2); i += 2) {
     const x = (i / 2) % mapWidth;
     const y = flr(i / 2 / mapWidth);
@@ -687,6 +711,20 @@ async function loadMap(name: string) {
         .join(""),
       16
     );
+  }
+}
+
+// Flags are represented in the .p8 file as 2 lines of 256 hexadecimal digits (128 bytes).
+// Each pair of digits represents the 8 flags (most significant nybble first) for each of the 256 sprites,
+// in sprite ID order.
+// In the graphics editor, the flags are arranged left to right from LSB to MSB:
+// red=1, orange=2, yellow=4, green=8, blue=16, purple=32, pink=64, peach=128.
+async function loadSpriteFlags(name: string) {
+  const response = await fetch(`assets/${name}/sprite_flags.txt`);
+  let flagsStr = await response.text();
+  flagsStr = flagsStr.replace(/(\r\n|\n|\r)/gm, "");
+  for (let i = 0; i < 512; i += 2) {
+    _sprite_flags[i / 2] = parseInt(flagsStr.slice(i, i + 2), 16);
   }
 }
 
@@ -783,6 +821,7 @@ export {
   camera,
   cls,
   spr,
+  fget,
   map,
   mget,
   mset,

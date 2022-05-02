@@ -1,4 +1,4 @@
-import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, } from "./engine.js";
+import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, fget, } from "./engine.js";
 // -- globals --
 // -------------
 let frames = 0;
@@ -23,7 +23,6 @@ let pause_player = false;
 let flash_bg = false;
 let new_bg = false;
 let start_game_flash = 0;
-// TODO: change for enum?
 const k_left = 0;
 const k_right = 1;
 const k_up = 2;
@@ -871,12 +870,13 @@ const orb = {
         spr(102, this.x, this.y);
         const off = frames / 30;
         for (let i = 0; i < 8; i++) {
+            // TODO: circfill
             // circfill(
             //   this.x + 4 + cos(off + i / 8) * 8,
             //   this.y + 4 + sin(off + i / 8) * 8,
             //   1,
             //   7
-            // ); TODO:
+            // );
         }
     },
 };
@@ -959,9 +959,11 @@ function init_object(type, x, y) {
         if (oy > 0 && !obj.check(platform, ox, 0) && obj.check(platform, ox, oy)) {
             return true;
         }
-        return (solid_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h) ||
-            obj.check(fall_floor, ox, oy) ||
-            obj.check(fake_wall, ox, oy));
+        else {
+            return (solid_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h) ||
+                obj.check(fall_floor, ox, oy) ||
+                obj.check(fake_wall, ox, oy));
+        }
     };
     obj.is_ice = function (ox, oy) {
         return ice_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h);
@@ -1002,7 +1004,7 @@ function init_object(type, x, y) {
     obj.move_x = function (amount, start) {
         if (obj.solids) {
             const step = sign(amount);
-            for (let i = start; i < abs(amount); i++) {
+            for (let i = start; i <= abs(amount); i++) {
                 if (!obj.is_solid(step, 0)) {
                     obj.x += step;
                 }
@@ -1243,7 +1245,7 @@ function draw() {
         });
     }
     // draw bg terrain
-    map(room.x * 16, room.y * 16, 0, 0, 16, 16, 4); // TODO: implement last parameter
+    map(room.x * 16, room.y * 16, 0, 0, 16, 16, 4);
     //  platforms/big chest
     objects.forEach((o) => {
         if (o.type === platform || o.type === big_chest) {
@@ -1318,7 +1320,7 @@ function draw_object(obj) {
         obj.type.draw.apply(obj);
     }
     else if (obj.spr > 0) {
-        spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y); // TODO: implement last two parameters in engine
+        // spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y); // TODO: implement last two parameters in engine, crashing now
     }
 }
 function draw_time(x, y) {
@@ -1353,10 +1355,10 @@ function ice_at(x, y, w, h) {
 }
 function tile_flag_at(x, y, w, h, flag) {
     for (let i = max(0, flr(x / 8)); i <= min(15, (x + w - 1) / 8); i++) {
-        for (let j = max(0, flr(y / 8)); i <= min(15, (y + h - 1) / 8); i++) {
-            // if (fget(tile_at(i, j), flag)) {
-            //   return true;
-            // } TODO:
+        for (let j = max(0, flr(y / 8)); j <= min(15, (y + h - 1) / 8); j++) {
+            if (fget(tile_at(i, j), flag)) {
+                return true;
+            }
         }
     }
     return false;
