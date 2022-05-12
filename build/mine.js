@@ -8,9 +8,7 @@ flr, rnd, clamp, min, sin, cos,
 // graphics
 camera, cls, spr, map, print, printc, rectfill, pal, palt, 
 // audio
-sfx, music, 
-// misc
-counterGet, counterSet, } from "./engine.js";
+sfx, music, } from "./engine.js";
 // the size of the board we'll be playing on in tiles
 const board_w = 16;
 const board_h = 15;
@@ -451,6 +449,7 @@ function drawGame() {
 //-----------------------------
 function update() {
     t += 1;
+    countersUpdate();
     if (scene === "menu") {
         updateMenu();
     }
@@ -478,5 +477,24 @@ export async function run() {
         update,
         draw,
     });
+}
+const counters = {};
+function counterSet(name, v) {
+    counters[name] = v;
+}
+function counterGet(name) {
+    return counters[name];
+}
+function countersUpdate() {
+    const keys = Object.keys(counters);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (counters[key] > 0) {
+            counters[key] -= 1;
+        }
+        else {
+            delete counters[key];
+        }
+    }
 }
 //# sourceMappingURL=mine.js.map

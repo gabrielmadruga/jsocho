@@ -25,9 +25,6 @@ import {
   // audio
   sfx,
   music,
-  // misc
-  counterGet,
-  counterSet,
 } from "./engine.js";
 
 // the size of the board we'll be playing on in tiles
@@ -517,6 +514,7 @@ function drawGame() {
 
 function update() {
   t += 1;
+  countersUpdate();
 
   if (scene === "menu") {
     updateMenu();
@@ -545,4 +543,23 @@ export async function run() {
     update,
     draw,
   });
+}
+
+const counters: Record<string, number> = {};
+function counterSet(name: string, v: number) {
+  counters[name] = v;
+}
+function counterGet(name: string) {
+  return counters[name];
+}
+function countersUpdate() {
+  const keys = Object.keys(counters);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    if (counters[key] > 0) {
+      counters[key] -= 1;
+    } else {
+      delete counters[key];
+    }
+  }
 }

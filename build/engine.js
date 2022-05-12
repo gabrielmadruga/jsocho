@@ -45,7 +45,6 @@ const _state = {
     transparentColors: [true],
     displayPaletteRemap: palCreate(),
     buttons: {},
-    counters: {},
 };
 const canvas = document.getElementById("canvas");
 canvas.width = 128;
@@ -65,7 +64,7 @@ const bufferImageData = ctx.getImageData(0, 0, bufferCanvas.width, bufferCanvas.
 const pixelbuffer = bufferImageData.data;
 cls();
 const pixelStride = 4;
-const lineStride = 4 * bufferCanvas.width;
+const lineStride = pixelStride * bufferCanvas.width;
 const spriteSizePx = 8;
 const audioCtx = new AudioContext();
 let assets;
@@ -76,7 +75,6 @@ async function start({ name, sfxCount, musicCount, init, update, draw, targetFPS
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const updateIntervalId = window.setInterval(() => {
         update();
-        countersUpdate();
         window.requestAnimationFrame(() => {
             draw();
             applyDisplayPaletteRemapping();
@@ -294,8 +292,8 @@ function printc(str, cx, y, color) {
     const x = cx - halfStrScreenLengthPx;
     print(str, x, y, color);
 }
-function spr(n, dx, dy, w = 1, h = 1, ...rest // TODO:
-) {
+function spr(n, dx, dy, w = 1, h = 1, flip_x = false, flip_y = false) {
+    n = flr(n);
     dx = flr(dx);
     dy = flr(dy);
     const spritesPerRow = 16;
@@ -303,7 +301,7 @@ function spr(n, dx, dy, w = 1, h = 1, ...rest // TODO:
     const sy = flr(n / spritesPerRow) * spriteSizePx;
     const sizeX = w * spriteSizePx;
     const sizeY = h * spriteSizePx;
-    copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer);
+    copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer, flip_x, flip_y);
 }
 const _sprite_flags = [];
 function fget(sprite, flag) {
@@ -425,6 +423,7 @@ window.addEventListener("keyup", function keydownListener(e) {
     _state.buttons[e.code] = false;
 });
 function putPixel(x, y, color, dData) {
+    color = flr(color);
     x = x + _state.camera.x;
     y = y + _state.camera.y;
     if (x < 0 || x >= bufferCanvas.width)
@@ -437,7 +436,7 @@ function putPixel(x, y, color, dData) {
         dData[i + j] = colorRGB[j];
     }
 }
-function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData) {
+function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData, flip_x = false, flip_y = false) {
     for (let y = 0; y < sizeY; y++) {
         const sLineStride = (sy + y) * lineStride;
         for (let x = 0; x < sizeX; x++) {
@@ -447,9 +446,17 @@ function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData) {
                 sColorRGB.push(sData[s + j]);
             }
             const colorAfterMapping = _state.drawPaletteRemap[colorFromRGB(sColorRGB)];
-            if (_state.transparentColors[colorAfterMapping])
-                continue;
-            putPixel(dx + x, dy + y, colorAfterMapping, dData);
+            if (!_state.transparentColors[colorAfterMapping]) {
+                if (flip_x) {
+                    putPixel(dx + (sizeX - 1 - x), dy + y, colorAfterMapping, dData);
+                }
+                else if (flip_y) {
+                    putPixel(dx + x, dy + (sizeY - 1 - y), colorAfterMapping, dData);
+                }
+                else {
+                    putPixel(dx + x, dy + y, colorAfterMapping, dData);
+                }
+            }
         }
     }
 }
@@ -589,24 +596,6 @@ async function loadAudios(name, audioContext, sfxCount, musicCount) {
     const musicBuffers = buffers.slice(-musicCount);
     return { sfxBuffers, musicBuffers };
 }
-function counterSet(name, v) {
-    _state.counters[name] = v;
-}
-function counterGet(name) {
-    return _state.counters[name];
-}
-function countersUpdate() {
-    const keys = Object.keys(_state.counters);
-    for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        if (_state.counters[key] > 0) {
-            _state.counters[key] -= 1;
-        }
-        else {
-            delete _state.counters[key];
-        }
-    }
-}
 export { 
 // entry point
 start, 
@@ -621,7 +610,5 @@ camera, cls, spr, fget, map, mget, mset, print, printc, rect, rectfill, pal, pal
 // audio
 sfx, music, 
 // cartdata
-dset, dget, 
-// misc
-counterGet, counterSet, };
+dset, dget, };
 //# sourceMappingURL=engine.js.map

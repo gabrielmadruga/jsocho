@@ -37,7 +37,10 @@ Type `save gameName` to generate a `p8` file which can be opened to copy the map
 
 ## Extra additions to the engine
 Vectors are a common used thing, so utilities for working with them were added, use `v()` to create vectors. All operations start with `v_`.
-`counterSet` and `counterGet` do not exist in Pico-8 and were added when translating mine. poc solves this issues with coroutings, which is quite cool, but harder to understand. The corouting implementation is already translated using generator functions. I should probably write a little bit about this latter on, maybe when I finish translating poc.
 Types
 `clamp`
 `sign`
+
+## Interesting things to dig in
+- Finish poc and research coroutins to drive game logic.
+- Having hot reloading working. Maybe by using Vite/Webpack and storing game state in engine?

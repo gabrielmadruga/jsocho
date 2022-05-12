@@ -66,7 +66,6 @@ type State = {
   transparentColors: boolean[];
   displayPaletteRemap: Color[];
   buttons: Record<string, boolean>;
-  counters: Record<string, number>;
 };
 
 type Assets = {
@@ -82,7 +81,6 @@ const _state: State = {
   transparentColors: [true],
   displayPaletteRemap: palCreate(),
   buttons: {},
-  counters: {},
 };
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -107,7 +105,7 @@ const bufferImageData = ctx.getImageData(
 const pixelbuffer = bufferImageData.data;
 cls();
 const pixelStride = 4;
-const lineStride = 4 * bufferCanvas.width;
+const lineStride = pixelStride * bufferCanvas.width;
 const spriteSizePx = 8;
 
 const audioCtx = new AudioContext();
@@ -137,7 +135,6 @@ async function start({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateIntervalId = window.setInterval(() => {
     update();
-    countersUpdate();
     window.requestAnimationFrame(() => {
       draw();
       applyDisplayPaletteRemapping();
@@ -390,8 +387,10 @@ function spr(
   dy: number,
   w = 1,
   h = 1,
-  ...rest: any[] // TODO:
+  flip_x = false,
+  flip_y = false
 ) {
+  n = flr(n);
   dx = flr(dx);
   dy = flr(dy);
   const spritesPerRow = 16;
@@ -399,7 +398,18 @@ function spr(
   const sy = flr(n / spritesPerRow) * spriteSizePx;
   const sizeX = w * spriteSizePx;
   const sizeY = h * spriteSizePx;
-  copyRect(sx, sy, dx, dy, sizeX, sizeY, assets.spritesPixels, pixelbuffer);
+  copyRect(
+    sx,
+    sy,
+    dx,
+    dy,
+    sizeX,
+    sizeY,
+    assets.spritesPixels,
+    pixelbuffer,
+    flip_x,
+    flip_y
+  );
 }
 
 const _sprite_flags: number[] = [];
@@ -554,6 +564,7 @@ function putPixel(
   color: Color,
   dData: Uint8ClampedArray
 ) {
+  color = flr(color);
   x = x + _state.camera.x;
   y = y + _state.camera.y;
   if (x < 0 || x >= bufferCanvas.width) return;
@@ -573,7 +584,9 @@ function copyRect(
   sizeX: number,
   sizeY: number,
   sData: Uint8ClampedArray,
-  dData: Uint8ClampedArray
+  dData: Uint8ClampedArray,
+  flip_x = false,
+  flip_y = false
 ) {
   for (let y = 0; y < sizeY; y++) {
     const sLineStride = (sy + y) * lineStride;
@@ -585,8 +598,15 @@ function copyRect(
       }
       const colorAfterMapping =
         _state.drawPaletteRemap[colorFromRGB(sColorRGB)];
-      if (_state.transparentColors[colorAfterMapping]) continue;
-      putPixel(dx + x, dy + y, colorAfterMapping, dData);
+      if (!_state.transparentColors[colorAfterMapping]) {
+        if (flip_x) {
+          putPixel(dx + (sizeX - 1 - x), dy + y, colorAfterMapping, dData);
+        } else if (flip_y) {
+          putPixel(dx + x, dy + (sizeY - 1 - y), colorAfterMapping, dData);
+        } else {
+          putPixel(dx + x, dy + y, colorAfterMapping, dData);
+        }
+      }
     }
   }
 }
@@ -759,24 +779,6 @@ async function loadAudios(
   return { sfxBuffers, musicBuffers };
 }
 
-function counterSet(name: string, v: number) {
-  _state.counters[name] = v;
-}
-function counterGet(name: string) {
-  return _state.counters[name];
-}
-function countersUpdate() {
-  const keys = Object.keys(_state.counters);
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (_state.counters[key] > 0) {
-      _state.counters[key] -= 1;
-    } else {
-      delete _state.counters[key];
-    }
-  }
-}
-
 export {
   // types
   Color,
@@ -837,7 +839,4 @@ export {
   // cartdata
   dset,
   dget,
-  // misc
-  counterGet,
-  counterSet,
 };

@@ -1140,7 +1140,7 @@ function update() {
     if (music_timer > 0) {
         music_timer -= 1;
         if (music_timer <= 0) {
-            music(10, 0, 7); // TODO: implement the other parameters in the engine, they do nothing right now.
+            music(10, 0, 7); // TODO: review music...
         }
     }
     if (sfx_timer > 0) {
@@ -1320,7 +1320,7 @@ function draw_object(obj) {
         obj.type.draw.apply(obj);
     }
     else if (obj.spr > 0) {
-        // spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y); // TODO: implement last two parameters in engine, crashing now
+        spr(obj.spr, obj.x, obj.y, 1, 1, obj.flip.x, obj.flip.y);
     }
 }
 function draw_time(x, y) {
