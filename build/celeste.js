@@ -1,26 +1,26 @@
 import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, fget, } from "./engine.js";
 // -- globals --
 // -------------
+let room = v(0, 0);
+const objects = [];
+const types = [];
+let freeze = 0;
+let shake = 0;
+let will_restart = false;
+let delay_restart = 0;
+const got_fruit = [];
+let has_dashed = false;
+let sfx_timer = 0;
+let has_key = false;
+let pause_player = false;
+let flash_bg = false;
+let music_timer = 0;
 let frames = 0;
 let seconds = 0;
 let minutes = 0;
 let start_game = false;
 let deaths = 0;
 let max_djump = 0;
-let music_timer = 0;
-let sfx_timer = 0;
-let freeze = 0;
-let shake = 0;
-let room = v(0, 0);
-const objects = [];
-const types = [];
-let will_restart = false;
-let delay_restart = 0;
-const got_fruit = [];
-let has_dashed = false;
-let has_key = false;
-let pause_player = false;
-let flash_bg = false;
 let new_bg = false;
 let start_game_flash = 0;
 const k_left = 0;
@@ -158,9 +158,9 @@ const player = {
             }
             else if (on_ice) {
                 accel = 0.05;
-                if (input == ((this.flip.x && -1) || 1)) {
-                    accel = 0.05;
-                }
+                // if (input == ((this.flip.x && -1) || 1)) {
+                //   accel = 0.05;
+                // }
             }
             if (abs(this.spd.x) > maxrun) {
                 this.spd.x = appr(this.spd.x, sign(this.spd.x) * maxrun, deccel);
@@ -256,40 +256,40 @@ const player = {
                 if (this.spd.x != 0) {
                     this.dash_accel.y *= 0.70710678118;
                 }
-                else if (dash && this.djump <= 0) {
-                    psfx(9);
-                    init_object(smoke, this.x, this.y);
-                }
             }
-            // -- animation
-            this.spr_off += 0.25;
-            if (!on_ground) {
-                if (this.is_solid(input, 0)) {
-                    this.spr = 5;
-                }
-                else {
-                    this.spr = 3;
-                }
+            else if (dash && this.djump <= 0) {
+                psfx(9);
+                init_object(smoke, this.x, this.y);
             }
-            else if (btn(k_down)) {
-                this.spr = 6;
-            }
-            else if (btn(k_up)) {
-                this.spr = 7;
-            }
-            else if (this.spd.x == 0 || (!btn(k_left) && !btn(k_right))) {
-                this.spr = 1;
+        }
+        // -- animation
+        this.spr_off += 0.25;
+        if (!on_ground) {
+            if (this.is_solid(input, 0)) {
+                this.spr = 5;
             }
             else {
-                this.spr = 1 + (this.spr_off % 4);
+                this.spr = 3;
             }
-            // -- next level
-            if (this.y < -4 && level_index() < 30) {
-                next_room();
-            }
-            // -- was on the ground
-            this.was_on_ground = on_ground;
         }
+        else if (btn(k_down)) {
+            this.spr = 6;
+        }
+        else if (btn(k_up)) {
+            this.spr = 7;
+        }
+        else if (this.spd.x == 0 || (!btn(k_left) && !btn(k_right))) {
+            this.spr = 1;
+        }
+        else {
+            this.spr = 1 + (this.spr_off % 4);
+        }
+        // -- next level
+        if (this.y < -4 && level_index() < 30) {
+            next_room();
+        }
+        // -- was on the ground
+        this.was_on_ground = on_ground;
     },
     draw() {
         // clamp in screen
@@ -310,7 +310,7 @@ function psfx(num) {
 }
 function create_hair(obj) {
     obj.hair = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i <= 4; i++) {
         obj.hair.push({ x: obj.x, y: obj.y, size: max(1, min(2, 3 - i)) });
     }
 }
@@ -339,11 +339,10 @@ const player_spawn = {
         this.spr = 3;
         this.target = { x: this.x, y: this.y };
         this.y = 128;
-        this.spd = { x: 0, y: -4 };
+        this.spd.y = -4;
         this.state = 0;
         this.delay = 0;
         this.solids = false;
-        this.flip = { x: 0, y: 0 };
         create_hair(this);
     },
     update() {
@@ -589,7 +588,7 @@ const fly_fruit = {
         this.sfx_delay = 8;
     },
     update() {
-        // ly away
+        // fly away
         if (this.fly) {
             if (this.sfx_delay > 0) {
                 this.sfx_delay -= 1;
@@ -603,7 +602,9 @@ const fly_fruit = {
                 destroy_object(this);
             }
             // wait
-            else if (has_dashed) {
+        }
+        else {
+            if (has_dashed) {
                 this.fly = true;
             }
             this.step += 0.05;
@@ -627,8 +628,9 @@ const fly_fruit = {
             if (dir < 0) {
                 off = 1 + max(0, sign(this.y - this.start));
             }
-            else
-                off = (off + 0.25) % 3;
+        }
+        else {
+            off = (off + 0.25) % 3;
         }
         spr(45 + off, this.x - 6, this.y - 2, 1, 1, true, false);
         spr(this.spr, this.x, this.y);
@@ -959,11 +961,9 @@ function init_object(type, x, y) {
         if (oy > 0 && !obj.check(platform, ox, 0) && obj.check(platform, ox, oy)) {
             return true;
         }
-        else {
-            return (solid_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h) ||
-                obj.check(fall_floor, ox, oy) ||
-                obj.check(fake_wall, ox, oy));
-        }
+        return (solid_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h) ||
+            obj.check(fall_floor, ox, oy) ||
+            obj.check(fake_wall, ox, oy));
     };
     obj.is_ice = function (ox, oy) {
         return ice_at(obj.x + obj.hitbox.x + ox, obj.y + obj.hitbox.y + oy, obj.hitbox.w, obj.hitbox.h);
@@ -1022,7 +1022,7 @@ function init_object(type, x, y) {
     obj.move_y = function (amount) {
         if (obj.solids) {
             const step = sign(amount);
-            for (let i = 0; i < abs(amount); i++) {
+            for (let i = 0; i <= abs(amount); i++) {
                 if (!obj.is_solid(0, step)) {
                     obj.y += step;
                 }
