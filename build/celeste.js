@@ -100,6 +100,7 @@ const player = {
         this.dash_accel = { x: 0, y: 0 };
         this.hitbox = { x: 1, y: 3, w: 6, h: 5 };
         this.spr_off = 0;
+        this.spr = 0;
         this.was_on_ground = false;
         create_hair(this);
     },
@@ -809,7 +810,7 @@ const big_chest = {
                 init_object(smoke, this.x, this.y);
                 init_object(smoke, this.x + 8, this.y);
                 this.timer = 60;
-                this.particles = {};
+                this.particles = [];
             }
             spr(96, this.x, this.y);
             spr(97, this.x + 8, this.y);
@@ -828,7 +829,7 @@ const big_chest = {
             }
             if (this.timer < 0) {
                 this.state = 2;
-                this.particles = {};
+                this.particles = [];
                 flash_bg = false;
                 new_bg = true;
                 init_object(orb, this.x + 4, this.y + 4);
@@ -855,7 +856,7 @@ const orb = {
     init() {
         this.spd.y = -4;
         this.solids = false;
-        this.particles = {};
+        this.particles = [];
     },
     draw() {
         this.spd.y = appr(this.spd.y, 0, 0.5);
@@ -1046,7 +1047,8 @@ function init_object(type, x, y) {
 function destroy_object(obj) {
     for (let i = 0; i < objects.length; i++) {
         if (obj === objects[i]) {
-            objects.splice(i, 1);
+            objects[i] = null;
+            return;
         }
     }
 }
@@ -1068,8 +1070,8 @@ function kill_player(obj) {
                 y: cos(angle) * 3,
             },
         });
-        restart_room();
     }
+    restart_room();
 }
 // -- room functions --
 // --------------------
@@ -1101,7 +1103,7 @@ function load_room(x, y) {
     has_dashed = false;
     has_key = false;
     // --remove existing objects
-    objects.forEach(destroy_object);
+    objects.length = 0;
     // --current room
     room = v(x, y);
     // -- entities
@@ -1169,11 +1171,18 @@ function update() {
     }
     //  update each object
     objects.forEach((obj) => {
+        if (!obj)
+            return;
         obj.move(obj.spd.x, obj.spd.y);
         if (obj.type.update) {
             obj.type.update.apply(obj);
         }
     });
+    for (let i = 0; i < objects.length; i++) {
+        if (!objects[i]) {
+            objects.splice(i, 1);
+        }
+    }
     //  start game
     if (is_title()) {
         if (!start_game && (btn(k_jump) || btn(k_dash))) {
@@ -1248,7 +1257,7 @@ function draw() {
     map(room.x * 16, room.y * 16, 0, 0, 16, 16, 4);
     //  platforms/big chest
     objects.forEach((o) => {
-        if (o.type === platform || o.type === big_chest) {
+        if (o && (o.type === platform || o.type === big_chest)) {
             draw_object(o);
         }
     });
@@ -1257,7 +1266,7 @@ function draw() {
     map(room.x * 16, room.y * 16, off, 0, 16, 16, 2);
     // draw objects
     objects.forEach((o) => {
-        if (o.type !== platform && o.type !== big_chest) {
+        if (o && o.type !== platform && o.type !== big_chest) {
             draw_object(o);
         }
     });
@@ -1303,6 +1312,8 @@ function draw() {
     if (level_index() == 30) {
         let p;
         for (let i = 0; i < objects.length; i++) {
+            if (!objects[i])
+                continue;
             if (objects[i].type == player) {
                 p = objects[i];
                 break;
