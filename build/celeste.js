@@ -1,4 +1,4 @@
-import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, fget, } from "./engine.js";
+import { btn, camera, clamp, cos, flr, max, min, music, pal, rectfill, rnd, sfx, sin, spr, start, v, print, map, abs, sign, mget, fget, line, circfill, } from "./engine.js";
 // -- globals --
 // -------------
 let room = v(0, 0);
@@ -100,7 +100,7 @@ const player = {
         this.dash_accel = { x: 0, y: 0 };
         this.hitbox = { x: 1, y: 3, w: 6, h: 5 };
         this.spr_off = 0;
-        this.spr = 0;
+        this.spr = 1;
         this.was_on_ground = false;
         create_hair(this);
     },
@@ -316,7 +316,8 @@ function create_hair(obj) {
     }
 }
 function set_hair_color(djump) {
-    pal(8, (djump == 1 && 8) || (djump == 2 && 7 + flr((frames / 3) % 2) * 4) || 12);
+    const c = (djump == 1 && 8) || (djump == 2 && 7 + flr((frames / 3) % 2) * 4) || 12;
+    pal(8, c);
 }
 function draw_hair(obj, facing) {
     let last = {
@@ -326,7 +327,7 @@ function draw_hair(obj, facing) {
     obj.hair.forEach((h) => {
         h.x += (last.x - h.x) / 1.5;
         h.y += (last.y + 0.5 - h.y) / 1.5;
-        // circfill(h.x, h.y, h.size, 8); TODO:
+        circfill(h.x, h.y, h.size, 8);
         last = h;
     });
 }
@@ -837,14 +838,9 @@ const big_chest = {
             }
             this.particles.forEach((p) => {
                 p.y += p.spd;
-                // TODO: implement line
-                // line(
-                //   this.x + p.x,
-                //   this.y + 8 - p.y,
-                //   this.x + p.x,
-                //   min(this.y + 8 - p.y + p.h, this.y + 8),
-                //   7
-                // );
+                // In the new version they just use rectfill with the same params
+                // https://github.com/NoelFB/Celeste/blob/master/Source/PICO-8/Classic.cs#L1099
+                line(this.x + p.x, this.y + 8 - p.y, this.x + p.x, min(this.y + 8 - p.y + p.h, this.y + 8), 7);
             });
         }
         spr(112, this.x, this.y + 8);
@@ -873,13 +869,7 @@ const orb = {
         spr(102, this.x, this.y);
         const off = frames / 30;
         for (let i = 0; i < 8; i++) {
-            // TODO: circfill
-            // circfill(
-            //   this.x + 4 + cos(off + i / 8) * 8,
-            //   this.y + 4 + sin(off + i / 8) * 8,
-            //   1,
-            //   7
-            // );
+            circfill(this.x + 4 + cos(off + i / 8) * 8, this.y + 4 + sin(off + i / 8) * 8, 1, 7);
         }
     },
 };
@@ -1299,6 +1289,7 @@ function draw() {
         rectfill(p.x - p.t / 5, p.y - p.t / 5, p.x + p.t / 5, p.y + p.t / 5, 14 + (p.t % 2));
     }
     // draw outside of the screen for screenshake
+    // TODO: what the hell is this doing on my engine? seems to work and be needed...
     rectfill(-5, -5, -1, 133, 0);
     rectfill(-5, -5, 133, -1, 0);
     rectfill(-5, 128, 133, 133, 0);
@@ -1402,6 +1393,18 @@ function spikes_at(x, y, w, h, xspd, yspd) {
     return false;
 }
 export async function run() {
+    // function update() {
+    //   return;
+    // }
+    // function draw() {
+    //   cls(9);
+    //   // circ(64, 64, 4, 3);
+    //   // line(0, 0, 0, 126, 5); // vertical y0 < y1
+    //   // line(127, 127, 127, 1, 3); // vertical with y0 > y1
+    //   // line(0, 0, 64, 64, 2); // slope -1
+    //   // line(99, 80, 60, 64, 6); // slope < 1
+    //   circfill(64, 64, 1, 3);
+    // }
     await start({
         name: "celeste",
         sfxCount: 63,

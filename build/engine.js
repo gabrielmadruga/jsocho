@@ -312,6 +312,108 @@ function fget(sprite, flag) {
         return (_sprite_flags[sprite] & (1 << flag)) !== 0;
     }
 }
+function line(x0, y0, x1, y1, col) {
+    // // Naive implementation
+    // const run = x1 - x0;
+    // const rise = y1 - y0;
+    // if (run === 0) {
+    //   // vertical line
+    //   if (y1 < y0) {
+    //     const tmp = y0;
+    //     y0 = y1;
+    //     y1 = tmp;
+    //   }
+    //   for (let y = y0; y <= y1; y++) {
+    //     putPixel(x0, y, col, pixelbuffer);
+    //   }
+    // } else {
+    //   const m = rise / run;
+    //   const b = y0 - m * x0;
+    //   if (m >= -1 && m <= 1) {
+    //     // more horizontal than vertical, we find the y value
+    //     if (x1 < x0) {
+    //       const tmp = x0;
+    //       x0 = x1;
+    //       x1 = tmp;
+    //     }
+    //     for (let x = x0; x <= x1; x++) {
+    //       const y = round(m * x + b);
+    //       putPixel(x, y, col, pixelbuffer);
+    //     }
+    //   } else {
+    //     if (y1 < y0) {
+    //       const tmp = y0;
+    //       y0 = y1;
+    //       y1 = tmp;
+    //     }
+    //     for (let y = y0; y <= y1; y++) {
+    //       const x = round((y - b) / m);
+    //       putPixel(x, y, col, pixelbuffer);
+    //     }
+    //   }
+    // }
+    // Bresenham from http://members.chello.at/~easyfilter/bresenham.js
+    col = _state.drawPaletteRemap[col];
+    const dx = abs(x1 - x0);
+    const sx = x0 < x1 ? 1 : -1;
+    const dy = -abs(y1 - y0);
+    const sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy;
+    let e2; // error value e_xy
+    for (;;) {
+        putPixel(x0, y0, col, pixelbuffer);
+        if (x0 == x1 && y0 == y1)
+            break;
+        e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        } // x step
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        } // y step
+    }
+}
+function circ(xm, ym, r, col) {
+    xm = flr(xm);
+    ym = flr(ym);
+    r = flr(r);
+    col = _state.drawPaletteRemap[col];
+    let x = -r;
+    let y = 0;
+    let err = 2 - 2 * r; /* bottom left to top right */
+    do {
+        putPixel(xm - x, ym + y, col, pixelbuffer); /*   I. Quadrant +x +y */
+        putPixel(xm - y, ym - x, col, pixelbuffer); /*  II. Quadrant -x +y */
+        putPixel(xm + x, ym - y, col, pixelbuffer); /* III. Quadrant -x -y */
+        putPixel(xm + y, ym + x, col, pixelbuffer); /*  IV. Quadrant +x -y */
+        r = err;
+        if (r <= y)
+            err += ++y * 2 + 1; /* y step */
+        if (r > x || err > y)
+            err += ++x * 2 + 1; /* x step */
+    } while (x < 0);
+}
+function circfill(xm, ym, r, col) {
+    col = _state.drawPaletteRemap[col];
+    xm = flr(xm);
+    ym = flr(ym);
+    r = flr(r);
+    let x = -r;
+    let y = 0;
+    let err = 2 - 2 * r; /* bottom left to top right */
+    do {
+        line(xm - x, ym + y, xm + x, ym + y, col);
+        line(xm - y, ym + x, xm + y, ym + x, col);
+        line(xm + y, ym - x, xm - y, ym - x, col);
+        r = err;
+        if (r <= y)
+            err += ++y * 2 + 1; /* y step */
+        if (r > x || err > y)
+            err += ++x * 2 + 1; /* x step */
+    } while (x < 0);
+}
 function rect(x0, y0, x1, y1, color = 0 /* Black */) {
     x0 = flr(x0);
     y0 = flr(y0);
@@ -349,7 +451,7 @@ function pal(c0, c1, p = 0) {
         if (c1 === undefined) {
             throw new Error("missing parameter c1 in call to pal");
         }
-        if (p === 1) {
+        if (p === 0) {
             _state.drawPaletteRemap[c0] = c1;
         }
         else {
@@ -437,8 +539,8 @@ function putPixel(x, y, color, dData) {
     }
 }
 function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData, flip_x = false, flip_y = false) {
+    let sLineStride = sy * lineStride;
     for (let y = 0; y < sizeY; y++) {
-        const sLineStride = (sy + y) * lineStride;
         for (let x = 0; x < sizeX; x++) {
             const s = (sx + x) * pixelStride + sLineStride;
             const sColorRGB = [];
@@ -458,11 +560,12 @@ function copyRect(sx, sy, dx, dy, sizeX, sizeY, sData, dData, flip_x = false, fl
                 }
             }
         }
+        sLineStride += lineStride;
     }
 }
 function copyRectMasked(sx, sy, dx, dy, sizeX, sizeY, sData, dData, maskColor, outColor) {
+    let sLineStride = sy * lineStride;
     for (let y = 0; y < sizeY; y++) {
-        const sLineStride = (sy + y) * lineStride;
         for (let x = 0; x < sizeX; x++) {
             const s = (sx + x) * pixelStride + sLineStride;
             const sColorRGB = [];
@@ -473,6 +576,7 @@ function copyRectMasked(sx, sy, dx, dy, sizeX, sizeY, sData, dData, maskColor, o
                 putPixel(dx + x, dy + y, outColor, dData);
             }
         }
+        sLineStride += lineStride;
     }
 }
 function colorFromRGB(rgb) {
@@ -606,7 +710,7 @@ flr, ceil, round, rnd, rndi, rndf, clamp, lerp, min, max, mid, sin, cos, sqrt, a
 // vector
 v, vma, v_add, v_sub, v_mul, v_div, v_neg, v_dot, v_norm, v_rotr, v_lensq, v_len, v_str, v_lerp, 
 // graphics
-camera, cls, spr, fget, map, mget, mset, print, printc, rect, rectfill, pal, palt, 
+camera, cls, spr, fget, map, mget, mset, print, printc, line, circ, circfill, rect, rectfill, pal, palt, 
 // audio
 sfx, music, 
 // cartdata
